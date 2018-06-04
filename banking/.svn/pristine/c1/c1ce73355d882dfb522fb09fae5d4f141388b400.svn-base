@@ -1,0 +1,251 @@
+<template>
+<el-main v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+  <el-row class="search">
+      <el-col :span="24">
+        <el-form :inline="true" class="demo-form-inline" style="display:flex;">
+          <el-form-item class="noMarginRight noMarginBottom" style="flex:1;padding-right:0px;">
+            <el-input placeholder="角色名称"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight noMarginBottom">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+  <div class="corporateNotice">
+    <div class="tableBox">
+        <el-table
+          :data="table.tbody"
+          border
+          style="width: 100%">
+          <el-table-column
+            label="公告类型">
+            <template slot-scope="scope">
+             <span v-text="scope.row.noticeType.type"></span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="title"
+            label="公告标题">
+          </el-table-column>
+          <el-table-column
+            prop="ct"
+            label="发布时间">
+          </el-table-column>
+          <el-table-column
+            label="发布人">
+            <template slot-scope="scope">
+             <span v-text="scope.row.ctId.nickName"></span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="120">
+            <template slot-scope="scope">
+              <el-button type="text">编辑</el-button>
+              <el-button type="text">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-row class="noMargin search">
+          <el-col :span="24">
+            <el-pagination
+              background
+              @current-change="currentChange"
+              @size-change="sizeChange"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="table.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="table.totalRecord">
+            </el-pagination>
+          </el-col>
+        </el-row>
+    </div>
+  </div>
+    <el-dialog
+      title="添加公告"
+      width="70%"
+      :visible="addDialogActive"
+      :before-close="closeDialog">
+      <el-row v-loading="loading.submit" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <el-form ref="ruleForm" label-width="110px" label-position="left">
+            <el-form-item label="角色名称：" required>
+              <el-input></el-input>
+            </el-form-item>
+            <el-form-item label="角色描述：" required>
+              <el-input></el-input>
+            </el-form-item>
+          </el-form>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;">确定</el-button>
+      </template>
+    </el-dialog>
+</el-main>
+</template>
+
+<script>
+import validation from "../../../static/js/validation.js";
+import { mapState } from "vuex";
+import UE from 'ueditor'
+export default {
+  name: "RoleManger",
+  data() {
+    return {
+      //loading信息
+      loading: {
+        all: true //整页的loading
+      },
+
+      //表格信息
+      table: {
+        tbody: [], //表格数据
+        currentPage: 1, //当前页
+        pageSize: 10, //每页条数
+        totalRecord: 0 //总条数
+      }
+    };
+  },
+  computed: mapState({
+    addDialogActive: state => state.corporateBulletin.corporateDialogActive
+  }),
+  methods: {
+    //关闭，新增 or 修改弹出框
+    closeDialog() {
+      //this.resetForm();
+      this.$store.commit(
+        "corporateBulletin/toogleCorporateDialogActive",
+        false
+      );
+    },
+
+    /**-----当前页改变时调用----- */
+    currentChange(currentPage) {
+      const self = this;
+      self.table.currentPage = currentPage;
+      self.init();
+    },
+
+    /**-----每页条目改变时调用----- */
+    sizeChange(pageSize) {
+      const self = this;
+      self.table.currentPage = 1;
+      self.table.pageSize = pageSize;
+      self.init();
+    },
+
+    //页面初始化
+    init() {
+      const self = this;
+      self.loading.all = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.companyNotice.getList,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+            pageNo: self.table.currentPage,
+            pageSize: self.table.pageSize
+          }
+        })
+        .then(response => {
+          self.loading.all = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.table.tbody = data.result.list;
+            self.table.totalRecord = data.result.totalRecord;
+          }
+        })
+        .catch(error => {
+          self.loading.all = false;
+        });
+    }
+  },
+  created() {
+    this.init();
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/.corporateNotice th,
+/deep/.corporateNotice td {
+  text-align: center;
+}
+/deep/.corporateNoticeTable .el-table__body-wrapper tr td:nth-of-type(2) {
+  color: #188ff0;
+}
+/deep/ .corporateNotice_top .el-col {
+  padding-top: 18px;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+.corporateNotice_top {
+  background: #fff;
+  height: 76px;
+  margin-bottom: 30px;
+}
+.noMarginRight {
+  padding-right: 10px;
+}
+.dateBox {
+  position: relative;
+}
+.dateBox .data_text {
+  position: absolute;
+  z-index: 10;
+  left: 6px;
+  font-size: 14px;
+  color: #585858;
+}
+.corporateNotice_top .noticeType {
+  padding-left: 10px;
+}
+/deep/.corporateNotice .tableBox {
+  overflow: auto;
+  min-height: calc(100vh - 200px);
+  border: 20px solid #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+/deep/.corporateNotice .tableBox .el-table {
+}
+</style>

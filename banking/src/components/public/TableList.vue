@@ -1,0 +1,723 @@
+<template>
+  <div>
+    <el-col :span="24">
+      <!-- 列表 list or table -->
+      <el-table
+        ref="multipleTable"
+        :data="data"
+        :stripe="true"
+        :border="true"
+        max-height="520"
+        :row-style="{height:'40px'}"
+        :header-row-style="{background: '#f2f4f7', height: '46px'}"
+        @selection-change="handleSelectionChange"
+        style="width: 100%">
+
+        <!-- 复选框 -->
+        <!-- <el-table-column
+                type="selection"
+                :selectable="selectable"
+                width="55">
+              </el-table-column> -->
+
+        <!-- thead -->
+        <el-table-column v-for="(item, index) in thead"
+                         :key="index"
+                         :prop="item.prop"
+                         :label="item.label"
+                         :min-width="item.minWidth ? item.minWidth : 120"
+                         :fixed="item.fixed ? item.fixed : false">
+        </el-table-column>
+
+        <!-- 操作按钮栏 -->
+        <el-table-column v-if="controButton.length>0"
+                         label="操作"
+                         :min-width="doWidth ? doWidth : 240"
+                         fixed="right">
+          <template slot-scope="scope">
+            <el-button v-for="(item, index) in controButton"
+                       :key="index"
+                       @click.native.prevent="deleteRow(scope.$index, data, item.name)"
+                       type="text"
+                       size="small">
+              {{item.name}}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-col>
+    <!--删除数据操作弹窗-->
+    <el-dialog title="删除" :visible.sync="delDateBtn" class="delUser" width="450px">
+      <div>您确定要删除该条数据吗?</div>
+      <el-form ref="form">
+        <el-form-item>
+          <el-input type="textarea"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!--删除员工操作弹窗-->
+    <el-dialog title="删除" :visible.sync="delUserBtn" width="450px" class="delUser">
+      <div class="msg">确定要删除该员工吗？</div>
+      <el-form ref="form">
+        <el-form-item>
+          <el-input type="textarea"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!--编辑弹框-->
+    <el-dialog title="编辑" :visible.sync="editDialogTableVisible" width="50%">
+      <el-form ref="form" label-width="80px">
+        <el-form-item>
+          <el-row>
+            <el-col :span="12" :gutter="20">
+              <el-input placeholder="请输入内容">
+                <template slot="prepend">* 部门名称</template>
+              </el-input>
+            </el-col>
+            <el-col :span="12">
+              <template>
+                <el-select v-model="value" placeholder="请选择" class="tree_select">
+                  <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </template>
+            </el-col>
+            <el-col :span="22">
+              <el-input>
+                <template slot="prepend">* 显示顺序</template>
+              </el-input>
+            </el-col>
+            <el-col :span="22" :gutter="20">
+              <el-input placeholder="请输入内容">
+                <template slot="prepend">* 部门地址</template>
+              </el-input>
+            </el-col>
+            <el-col :span="22" :gutter="20">
+              <el-input placeholder="请输入内容">
+                <template slot="prepend">* 部门描述</template>
+              </el-input>
+            </el-col>
+          </el-row>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+    <el-footer class="footer block" height="50px" v-if="false">
+      <el-row class="setPagination">
+        <!-- 控制按钮 -->
+        <el-col :span="10">
+          <div class="grid-content bg-purple">
+
+            <!-- <el-checkbox @change="toggleSelection(data)"></el-checkbox> -->
+            <el-button type="small">批量通过</el-button>
+            <el-button type="small">批量拒绝</el-button>
+            <el-button type="small">批量上架</el-button>
+            <el-button type="small">批量下架</el-button>
+            <!-- <el-button type="small" @click="toggleSelection([tableData[1], tableData[2]])">切换第三</el-button>
+                    <el-button type="small" @click="toggleSelection()">取消选择</el-button> -->
+          </div>
+        </el-col>
+
+        <!-- 分页器 -->
+        <el-col :span="14">
+          <div class="grid-content bg-purple-light">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage4"
+              :page-sizes="[100, 200, 300, 400]"
+              :page-size="100"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="400">
+            </el-pagination>
+          </div>
+        </el-col>
+      </el-row>
+    </el-footer>
+    <!--字典管理 添加-->
+    <el-dialog
+      class="addDict"
+      :visible.sync="addDictBtn"
+      width="550px"
+      title="添加">
+      <div class="addDictContent">
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-input>
+              <template slot="prepend">名称:</template>
+            </el-input>
+          </el-col>
+          <el-col :span="12">
+            <el-input>
+              <template slot="prepend">排序:</template>
+            </el-input>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-input>
+              <template slot="prepend">代表值:</template>
+            </el-input>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-input>
+              <template slot="prepend">描述:</template>
+            </el-input>
+          </el-col>
+        </el-row>
+      </div>
+      <div class="dialog-footer" slot="footer">
+        <span class="save">保存</span>
+      </div>
+    </el-dialog>
+    <!--添加 乙方-->
+    <el-dialog
+      class="addCooperation"
+      title="添加"
+      width="550px"
+      :visible.sync="addCooperation">
+      <el-form v-show="true">
+        <el-form-item>
+          <el-input>
+            <template slot="prepend">排序值 :</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-input>
+            <template slot="prepend">公寓品牌 :</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-input>
+            <template slot="prepend">住所地 :</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item class="item2">
+          <el-row>
+            <el-col :span="11" class="behalf">
+              <el-input>
+                <template slot="prepend">法定代表 :</template>
+              </el-input>
+            </el-col>
+            <el-col :span="11" class="phone">
+              <el-input>
+                <template slot="prepend">联系电话 :</template>
+              </el-input>
+            </el-col>
+          </el-row>
+        </el-form-item>
+      </el-form>
+      <div class="el-footer" slot="footer">
+        <span class="save">保存</span>
+      </div>
+    </el-dialog>
+    <!--修改权限-->
+    <el-dialog class="editRole" width="1000px" :visible.sync="editRoleBtn"
+               title="修改权限">
+      <el-tabs type="border-card">
+        <el-tab-pane label="用户管理">新增</el-tab-pane>
+        <el-tab-pane label="配置管理">工作台</el-tab-pane>
+        <el-tab-pane label="角色管理">租客资源</el-tab-pane>
+        <el-tab-pane label="定时任务补偿">业主资源</el-tab-pane>
+        <el-tab-pane label="房态">房态</el-tab-pane>
+        <el-tab-pane label="待租资源">待租资源</el-tab-pane>
+      </el-tabs>
+    </el-dialog>
+    <!--部门管理中编辑 -->
+    <el-dialog title="编辑部门" :visible.sync="editApartmentBtn" class="editApartment"
+               width="600px">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input>
+            <template slot="prepend">部门名称</template>
+          </el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input placeholder="总公司">
+          </el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input>
+            <template slot="prepend">部门名称</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-select v-model="value" placeholder="请选择" style="width: 276px;">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="12" placeholder="总公司">
+          <el-input>
+            <template slot="prepend">部门电话</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="8">
+          <el-select v-model="value" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="8">
+          <el-select v-model="value" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="8">
+          <el-select v-model="value" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+      </el-row>
+      <el-row style="margin-top:10px">
+        <el-col :span="24">
+          <el-input>
+            <template slot="prepend">部门地址:</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input>
+            <template slot="prepend">部门描述:</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <div slot="footer" class="el-footer">
+        <el-button type="primary">保存</el-button>
+      </div>
+    </el-dialog>
+    <!--角色管理 编辑dialog-->
+    <el-dialog class="roleEdit" title="角色管理" width="450px" :visible.sync="roleEditBtn">
+      <el-row>
+        <el-col :span="12">
+          <el-input>
+            <template slot="prepend">角色名称:</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input>
+            <template slot="prepend">角色描述:</template>
+          </el-input>
+        </el-col>
+      </el-row>
+      <div class="dialog-footer" slot="footer">
+        <el-button type="primary">保存</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "TableList",
+    props: {
+      tableOption: {
+        type: Object,
+        default: {
+          tags: [],
+          thead: [],
+          controButton: [],
+          data: [],
+          selectAll: false,
+          doWidth: 0
+        },
+        required: true
+      }
+    },
+    data() {
+      return {
+        // tableData: Array(30).fill(tableData),
+        value: '',
+        delDateBtn: false,
+        roleEditBtn:false,  // 编辑角色弹窗
+        delUserBtn: false,
+        editDialogTableVisible: false,
+        addDictBtn: false, //添加字典
+        addCooperation: false,
+        editRoleBtn: false, //修改权限
+        editApartmentBtn: false, //编辑部门
+        tags: [],
+        thead: [],
+        doWidth: 0, // 控制操作按钮组宽度
+        controButton: [],
+        data: [],
+        currentPage1: 5,
+        currentPage2: 5,
+        currentPage3: 5,
+        currentPage4: 4,
+        multipleSelection: [],
+        selectAll: false,// 全选 or 全不选,
+        options: [{
+          value: '选项1',
+          label: '选项1'
+        }, {
+          value: '选项2',
+          label: '选项2'
+        }, {
+          value: '选项3',
+          label: '选项3'
+        }],
+        value: ''
+      };
+    },
+    methods: {
+      // table删出事件
+      deleteRow(index, rows, val) {
+        // console.log(index, rows);
+       /* console.log(val);*/
+        switch (val) {
+          case '编辑':
+            break;
+          case '修改权限':
+            break;
+          case '删除':
+            this.dialogTableVisible = true;
+            break;
+          default :
+        }
+        // rows.splice(index, 1);
+      },
+      // table多选
+      toggleSelection(rows) {
+        //	根据当前状态， 决定是否全选
+        if (this.selectAll) {
+          rows.forEach(row => {
+            this.$refs.multipleTable.toggleRowSelection(row, "selected");
+          });
+        } else {
+          this.$refs.multipleTable.clearSelection();
+        }
+        this.selectAll = !this.selectAll;
+      },
+      // 当table复选框发生变化时触发此函数
+      handleSelectionChange(val) {
+        this.multipleSelection = val;
+      },
+      // 返回一个 多选框 的状态（是否可用）
+      selectable(row, index) {
+        // console.log(row, index)
+        return this.selectAll;
+      },
+
+      //分页器
+      handleSizeChange(val) {
+        console.log(`每页 ${val} 条`);
+      },
+      handleCurrentChange(val) {
+        console.log(`当前页: ${val}`);
+      }
+    },
+    created() {
+      const {tableOption} = this.$props;
+      if (tableOption && tableOption.tags) {
+        this.tags = tableOption.tags;
+      }
+      if (tableOption && tableOption.data) {
+       /* console.log(tableOption.data)*/
+      }
+      if (tableOption && tableOption.thead) {
+        this.thead = tableOption.thead;
+      }
+      if (tableOption && tableOption.doWidth) {
+        this.doWidth = tableOption.doWidth;
+      }
+      if (tableOption && tableOption.controButton) {
+        this.controButton = tableOption.controButton;
+      }
+      if (tableOption && tableOption.data) {
+        this.data = tableOption.data;
+      }
+      if (tableOption && tableOption.data) {
+        this.selectAll = tableOption.selectAll;
+        this.data= tableOption.data
+      }
+    }
+  };
+</script>
+
+<style scoped>
+  /*角色名称 编辑*/
+  /deep/ .roleEdit .el-input-group__prepend {
+    padding: 0 0 0 10px;
+    background: #fff;
+    border: none;
+  }
+
+  /deep/ .roleEdit .el-input-group__prepend:before {
+    content: "*";
+    color: #ff0000;
+    display: block;
+    position: absolute;
+    top:2px ;
+    left: 2px;
+  }
+
+  /deep/.roleEdit .el-input-group input{
+    border:none;
+  }
+
+  .roleEdit .el-input{
+    border: 1px solid #dcdfe6;
+  }
+
+  /*修改权限*/
+  /deep/ .editRole .el-tabs__item.is-active {
+    box-shadow: 0 2px 0 #188ff0 inset;
+  }
+
+  /*删除数据弹框*/
+  .delUser .msg {
+    color: #f2082e;
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+
+  /deep/ .delUser .el-dialog__body {
+    padding: 30px 30px 0 30px;
+  }
+
+  /deep/ .delUser textarea {
+    height: 100px;
+    resize: none;
+  }
+
+  /*增加字典 弹窗*/
+  /deep/ .el-dialog__title {
+    color: #188ff0;
+    font-size: 16px;
+  }
+
+  .addDict .save {
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 40px;
+    display: block;
+    margin-left: 416px;
+    color: #ffffff;
+    font-size: 16px;
+  }
+
+  /deep/ .addDict .el-dialog__body {
+    padding-bottom: 17px;
+  }
+
+  /deep/ .addDict .el-input__inner:focus {
+    border-color: #dcdfe6;
+    outline: 0;
+  }
+
+  /deep/ .addDict .el-input-group__prepend {
+    border-radius: 0;
+    border-right: 0px;
+    background: #fff;
+    color: #404040;
+    font-size: 14px;
+  }
+
+  /deep/ .addDict .el-input__inner {
+    border-left: none;
+
+  }
+
+  .addDict {
+
+  }
+
+  /*弹窗 end */
+  .el-tag--mini {
+    line-height: 20px;
+  }
+
+  #tableWidget {
+    overflow: hidden;
+    /*padding:20px ;*/
+    background: #f2f3f5;
+  }
+
+  #tableWidget > .header,
+  #tableWidget > .main,
+  #tableWidget > .footer {
+    background: #fff;
+  }
+
+  /* 搜索栏 */
+  #tableWidget > .header {
+    line-height: 76px;
+  }
+
+  /* list or table */
+  #tableWidget > .main {
+    margin-top: 14px;
+  }
+
+  /* tag标签 */
+  .tag {
+    border: 0;
+    color: #999;
+    cursor: pointer;
+  }
+
+  .tag:hover {
+    color: red;
+  }
+
+  .tagActive {
+    color: red;
+  }
+
+  .tag-header {
+    margin: 0 0 20px 0;
+    padding: 0px;
+    height: 20px !important;
+  }
+
+  .tag-header:empty {
+    display: none;
+  }
+
+  /*.el-footer {
+    position: fixed;
+    bottom: 20px;
+    z-index: 999;
+    width: 100%;
+  }*/
+
+  .setPagination {
+    margin-top: 6px;
+  }
+
+  .el-tree {
+    background: #f2f3f5;
+  }
+
+  /* .inputBox input{
+     outline: none;
+     border-radius:0;
+     appearance: none;
+     border:none;
+   }*/
+  .el-input-group {
+    margin-bottom: 10px;
+  }
+
+  .tree_select {
+    margin-left: 20px;
+  }
+
+  /deep/ .addCooperation .el-row {
+    margin-bottom: 0;
+  }
+
+  /deep/ .addCooperation .el-input-group__prepend,
+  /deep/ .addCooperation .el-input-group__append {
+    background: #fff;
+    border: none;
+  }
+
+  /deep/ .addCooperation .el-input-group__prepend {
+    padding: 0 0 0 10px;
+  }
+
+  /deep/ .addCooperation .el-input-group__prepend::before {
+    content: '*';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    color: #ff0000;
+  }
+
+  /deep/ .addCooperation .el-form-item {
+    margin-bottom: 15px;
+  }
+
+  .addCooperation .phone {
+    margin-left: 20px;
+    width: 244px;
+  }
+
+  .addCooperation .behalf {
+    width: 244px;
+  }
+
+  /deep/ .addCooperation .item2 {
+    border: none;
+  }
+
+  /deep/ .addCooperation .el-footer {
+    position: static;
+  }
+
+  /deep/ .addCooperation .el-input {
+    border: 1px solid #dcdfe6;;
+  }
+
+  /deep/ .addCooperation .item2.el-input {
+    border: none;
+  }
+
+  /deep/ .addCooperation .el-input input {
+    border: none;
+  }
+
+  /deep/ .addCooperation .el-footer .save {
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    display: inline-block;
+    line-height: 40px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 16px;
+    margin-bottom: 20px;
+    position: static;
+    left: 14px;
+  }
+
+  /deep/ .addCooperation .el-dialog__body {
+    padding-bottom: 0;
+  }
+
+
+</style>

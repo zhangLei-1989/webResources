@@ -1,0 +1,149 @@
+<template>
+		<el-row :gutter="20">
+		  <el-col :span="11">
+
+					<el-row>
+
+				  	<el-col v-for="(item,index) of stateTabs" :key="'tabs'+index" :span="4" class="nav-item">
+							<router-link class="router-link" v-bind:class="{'active':index==0}" :to="{path: item.path}">{{item.name}}</router-link>
+						</el-col>
+
+					</el-row>
+
+			</el-col>
+		  <el-col :span="11">
+
+				<el-row :gutter="6" class="borderRight">
+
+					<el-col :span="4" v-for="(item,index) of stateBtns" :key="'btns'+index" class="btn-item">
+						<el-button v-if="item.click" type="danger" class="btn" v-on:click="item.click">{{item.name}}</el-button>
+						<el-button v-else-if="!item.click" type="danger" class="btn">{{item.name}}</el-button>
+					</el-col>
+
+				</el-row>
+
+			</el-col>
+		  <el-col :span="2" style="padding:0 !important;">
+
+					<el-row>
+						<el-col :span="24" class="header-container">
+							<img class="header-img" :src="'https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg'" />
+							<span class="nickname" v-text="'高雨婷'"></span>
+						</el-col>
+					</el-row>
+
+			</el-col>
+		</el-row>
+</template>
+
+<script>
+export default {
+  name: "cms-header",
+  props: {
+    tabs: {
+      type: Array,
+      default: [],
+      required: true
+    },
+    btns: {
+      type: Array
+    }
+  },
+  data() {
+    return {
+      stateTabs: [],
+      stateBtns: []
+    };
+  },
+  computed: {
+    userInfo: function() {
+      return this.$store.state.userInfo;
+    }
+  },
+  created() {
+    const { tabs } = this.$props;
+    if (tabs) {
+      this.stateTabs = tabs;
+    }
+    const { btns } = this.$props;
+    if (btns) {
+      this.stateBtns = btns.reverse();
+    }
+  }
+};
+</script>
+
+<style scoped>
+.nav-item {
+  text-align: center;
+  height: 60px;
+  line-height: 60px;
+}
+
+.nav-item a.router-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: #2e3445;
+  font-size: 14px;
+  position: relative;
+}
+.nav-item a.router-link.active {
+  color: #ed0536;
+}
+.nav-item a.router-link.active::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: #ed0536;
+  bottom: 0;
+  position: absolute;
+}
+
+.btn-item {
+  text-align: center;
+  height: 60px;
+  line-height: 60px;
+  float: right;
+}
+
+.borderRight {
+  border-right: 1px solid #f2f6f7;
+  padding-right: 10px;
+}
+.borderRight:empty {
+  border-right: 0px;
+  padding-right: 0px;
+  height: 60px;
+}
+
+.btn-item .btn {
+  width: 100% !important;
+  padding: 12px 0px !important;
+  text-align: center;
+  border-radius: 3px;
+}
+
+.el-button--danger {
+  background: #ed0536;
+  border-color: #ed0536;
+}
+
+.header-container {
+  display: flex;
+  height: 60px;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}
+.nickname {
+  padding-left: 10px;
+  font-size: 14px;
+}
+</style>

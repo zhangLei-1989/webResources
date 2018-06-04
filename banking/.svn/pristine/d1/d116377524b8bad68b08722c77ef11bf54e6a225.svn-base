@@ -1,0 +1,65 @@
+//服务器地址
+const server_address = 'http://192.168.100.11:52011'
+//const server_address='http://192.168.106.118:52002' //财务测试地址
+//const server_address = 'http://192.168.100.11:52001'
+// const server_address = 'http://192.168.106.123:52002'
+//const server_address='http://192.168.106.118:52002' //财务测试地址
+// const server_address = 'http://192.168.100.11:52001'
+
+
+//服务器api地址
+const api = {
+
+    //接口地址
+    setting: {  //系统设置
+        login: "/v2/jjr_user_login/pc_login",  //登录
+        department: {  //部门
+            getList: "/v2/sys/department/get_list",  //部门列表
+            save: "/v2/sys/department/save",  //部门保存 or 修改
+            deleteById: '/v2/sys/department/delete_by_id'  //部门删除
+        },
+        location: {
+            cityGetList: "/v2/location/city/get_list",  //获取城市列表
+            townGetList: "/v2/location/town/get_list",  //获取区县列表
+            districtGetList: "/v2/location/district/get_list"  //获取商圈列表
+        }
+    },
+    borrowApply: {  //审批
+        getList: "/v2/contract/borrow_apply/get_list",  //获取审批列表
+        getBorrowApplyList: "/v2/contract/borrow_apply/get_borrowApplyList",  //获取审批详情
+        approStatus: "/v2/contract/borrow_apply/appro_Status",  //提交审批
+        creatContract: "/v2/contract/borrow_apply/creat_Contract",  //生成合同
+        getRatePriceList: "/v2/contract/borrow_apply/get_ratePriceList"  //计算收支
+    },
+    contract: {  //合同
+        getList: "/v2/contract/contract/get_list"  //获取合同列表
+    },
+    basePartner: {  //合作方
+        getList: "/v2/base/base_partner/get_list"  //获取合作方列表
+    },
+    finance: { // 财务配置
+        receivable: '/v2/balance/finance_bill/receivable', // 合同应收数据
+        alreadyCollect: '/v2/balance/finance_bill/finace_data' // 已收
+    }
+
+}
+
+//自动给接口地址添加域名
+const autoAddServerAddress = function (obj) {
+
+    const result = Object.create(null)
+
+    for (let key in obj) {
+
+        if (typeof obj[key] == 'object') {
+            result[key] = autoAddServerAddress(obj[key])
+        } else {
+            result[key] = server_address + obj[key]
+        }
+
+    }
+    return result
+
+}
+
+export default autoAddServerAddress(api)

@@ -1,0 +1,374 @@
+<template>
+<el-main>
+    <div class="dictSide">
+      <el-row style="background:#fff;">
+        <el-col :span="24">
+          <el-tabs v-model="tabs.activeName">
+            <el-tab-pane label="贷款" name="tabs1">
+              <el-row style="background:#fff;">
+                <el-col :span="3">
+                  <el-menu
+                    :default-active="menuIndex1"
+                    style="background:#E6EAEB;"
+                    @select="menuSelect">
+                    <el-menu-item index="1-1">
+                      <span slot="title">贷款种类</span>
+                    </el-menu-item>
+                  </el-menu>
+                </el-col>
+                <el-col :span="21">
+                  <el-table
+                    :data="table.tbody1"
+                    border
+                    v-loading="loading.all"
+                    element-loading-background="rgba(0, 0, 0, 0)"
+                    style="width: 100%">
+                    <el-table-column
+                      prop="key"
+                      label="名称">
+                    </el-table-column>
+                    <el-table-column
+                      prop="order"
+                      label="排序值">
+                    </el-table-column>
+                    <el-table-column
+                      prop="desc"
+                      label="描述">
+                    </el-table-column>
+                    <el-table-column
+                      fixed="right"
+                      label="操作"
+                      width="120">
+                      <template slot-scope="scope">
+                        <!-- <el-button type="text" @click="edit(scope.row.id)">编辑</el-button>
+                        <el-button type="text" @click="openDeleteDialog(scope.row.id)">删除</el-button> -->
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-col>
+              </el-row>
+            </el-tab-pane>
+            <el-tab-pane label="交易" name="tabs2">
+              <el-row style="background:#fff;">
+                <el-col :span="3">
+                  <el-menu
+                    :default-active="menuIndex2"
+                    style="background:#E6EAEB;"
+                    @select="menuSelect">
+                    <el-menu-item index="2-1">
+                      <span slot="title">支付方式</span>
+                    </el-menu-item>
+                    <el-menu-item index="2-2">
+                      <span slot="title">币种</span>
+                    </el-menu-item>
+                  </el-menu>
+                </el-col>
+                <el-col :span="21">
+                  <el-table
+                    :data="table.tbody2"
+                    border
+                    v-loading="loading.all"
+                    element-loading-background="rgba(0, 0, 0, 0)"
+                    style="width: 100%">
+                    <el-table-column
+                      prop="key"
+                      label="名称">
+                    </el-table-column>
+                    <el-table-column
+                      prop="order"
+                      label="排序值">
+                    </el-table-column>
+                    <el-table-column
+                      prop="desc"
+                      label="描述">
+                    </el-table-column>
+                    <el-table-column
+                      fixed="right"
+                      label="操作"
+                      width="120">
+                      <template slot-scope="scope">
+                        <!-- <el-button type="text" @click="edit(scope.row.id)">编辑</el-button>
+                        <el-button type="text" @click="openDeleteDialog(scope.row.id)">删除</el-button> -->
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-col>
+              </el-row>
+            </el-tab-pane>
+          </el-tabs>
+        </el-col>
+      </el-row>
+    <el-dialog
+      title="添加"
+      width="50%"
+      :visible="addDialogActive"
+      :before-close="closeDialog">
+      <el-row v-loading="loading.submit" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <el-form ref="ruleForm" label-width="90px" label-position="left">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="名称：" required>
+                  <el-input v-model="form.name"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="排序值：" required>
+                  <el-input v-model="form.order"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="代表值：">
+              <el-input v-model="form.repre"></el-input>
+            </el-form-item>
+            <el-form-item label="描述：">
+              <el-input v-model="form.desc"></el-input>
+            </el-form-item>
+          </el-form>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="save">保存</el-button>
+      </template>
+    </el-dialog>
+    </div>
+  </el-main>
+</template>
+
+<script>
+import validation from "../../../static/js/validation.js";
+import { mapState } from "vuex";
+export default {
+  name: "AlreadyAdopted",
+  data() {
+    return {
+      loading: {
+        all: true,
+        submit: false //提交的loading
+      },
+      tabs: {
+        activeName: "tabs1"
+      },
+      //表单信息
+      form: {
+        id: "",
+        mark: "",
+        parentId: "",
+        name: "", //名称
+        order: "", //排序值
+        repre: "", //代表
+        desc: "" //描述
+      },
+      menuList: [],
+      index: "1-1",
+      menuIndex1: "",
+      menuIndex2: "",
+      table: {
+        tbody1: [],
+        tbody2: []
+      }
+    };
+  },
+  computed: mapState({
+    addDialogActive: state => state.dictManger.dictionaryDialogActive
+  }),
+  methods: {
+    //关闭，新增 or 修改弹出框
+    closeDialog() {
+      //this.resetForm();
+      this.$store.commit("dictManger/toogleDictionaryDialogActive", false);
+    },
+
+    getListByMark(id) {
+      const self = this;
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.ziDian.getListByMark,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            id: id
+          }
+        }
+      });
+    },
+
+    getByMark(mark) {
+      const self = this;
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.ziDian.get,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            mark: mark
+          }
+        }
+      });
+    },
+
+    menuSelect(index) {
+      const self = this;
+      switch (index) {
+        case "1-1":
+          self.form.mark = "6a9e733f-b452-4924-9e46-919549b44784";
+          break;
+        case "2-1":
+          self.form.mark = "";
+          break;
+        case "2-2":
+          self.form.mark = "";
+          break;
+      }
+      self.index = index;
+      self.init();
+    },
+
+    async init(mark) {
+      const self = this;
+      if (self.form.mark) {
+        const { data } = await this.getByMark(self.form.mark);
+        if (data.status.code == 200) {
+          const { id } = data.result;
+          self.form.parentId = id;
+          const { data: data2 } = await this.getListByMark(id);
+          if (data2.status.code == 200) {
+            const { list } = data2.result;
+            self.table["tbody" + self.index.substr(0, 1)] = list;
+          }
+        }
+      }
+    },
+
+    //保存字典
+    save() {
+      const self = this;
+
+      const validate = new validation();
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.name,
+        "名称不能为空！"
+      );
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.order,
+        "排序值不能为空！"
+      );
+      const result = validate.startValidate();
+      if (result) {
+        self.$message.error(result);
+      } else {
+        if (!self.loading.submit) {
+          self.loading.submit = true;
+          self
+            .axios({
+              method: "post",
+              url: self.$store.state.api.setting.ziDian.save,
+              data: {
+                gcid: "0100099",
+                userid: "ab0f10cd02094f7b9b82b82088742557",
+                token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+                params: {
+                  key: self.form.name,
+                  order: self.form.order,
+                  desc: self.form.desc,
+                  value: self.form.repre,
+                  parentId: self.form.parentId
+                }
+              }
+            })
+            .then(response => {
+              self.loading.submit = false;
+              const { data } = response;
+              if (data.status.code == 200) {
+                self.$alert("操作成功", "提示", {
+                  callback: action => {
+                    self.init();
+                    self.closeDialog();
+                  }
+                });
+              }
+            })
+            .catch(error => {
+              self.loading.submit = false;
+            });
+        }
+      }
+    }
+  },
+  async created() {
+    const self = this;
+    self.loading.all = true;
+    const { data: listData } = await self.getListByMark();
+    if (listData.status.code == 200) {
+      const { list } = listData.result;
+      self.menuList = list;
+      if (list.length > 0) {
+        self.menuIndex = list[0].id;
+        const { data } = await self.getByMark(list[0].id);
+        if (data.status.code == 200) {
+          self.table.tbody = [data.result];
+        }
+      }
+    }
+    self.loading.all = false;
+  }
+};
+</script>
+
+<style scoped>
+/deep/ .dictSideTab .el-tabs__item {
+  display: block;
+  border: none;
+  font-size: 14px;
+  text-align: center;
+  color: #404040;
+}
+
+/deep/ .dictSideTab .el-tabs__item.is-active {
+  background: #f2f4f7;
+}
+
+/deep/ .dictSideTab .el-tabs__nav-wrap {
+  float: left;
+  background: #e8eaed;
+  min-height: calc(100vh - 140px);
+}
+
+/deep/ .dictSideTab .el-tabs__nav {
+  border: none;
+}
+
+.dictSide {
+  border: 20px solid #fff;
+  overflow: auto;
+}
+
+/deep/.DictManger.el-main {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  padding: 0px;
+}
+
+.tableWrap {
+  background: #f2f4f7;
+  display: flex;
+  padding-left: 20px;
+}
+
+/deep/ .tableWrap th,
+/deep/ .tableWrap td {
+  text-align: center;
+}
+.el-menu {
+  border-right: 0px;
+}
+.el-menu li {
+  height: 47.5px;
+  line-height: 47.5px;
+}
+</style>

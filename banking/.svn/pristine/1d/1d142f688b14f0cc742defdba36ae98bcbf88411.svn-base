@@ -1,0 +1,804 @@
+<template>
+	<el-main v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+		<el-row>
+      <el-col :span="24">
+        <span class="el-tag--cms" :class="{'active':status_index==0}" @click="changeStatusTab(3,0)">待审核</span>
+        <span class="el-tag--cms" :class="{'active':status_index==1}" @click="changeStatusTab(0,1)">已通过</span>
+        <span class="el-tag--cms" :class="{'active':status_index==2}" @click="changeStatusTab(4,2)">已驳回</span>
+      </el-col>
+    </el-row>
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input placeholder="最低" style="width:100px;" v-model="screen.minPrice"></el-input>
+            —
+            <el-input placeholder="最高" style="width:100px;" v-model="screen.maxPrice"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <span style="padding:0 12px;color:#606266;">合同时间</span>
+            <el-date-picker
+              type="daterange"
+              v-model="screen.dateRange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input placeholder="合同编号" v-model="screen.no"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="search">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe @row-click="tableRowClick">
+          <el-table-column
+            label="状态">
+            <template slot-scope="scope">
+              <span v-if="scope.row.status==3" class="finance-state bule">待审核</span>
+              <span v-if="scope.row.status==0" class="finance-state orange">待打款</span>
+              <span v-if="scope.row.status==4" class="finance-state red">已驳回</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="借款人 / 金额 / 类别">
+            <template slot-scope="scope">
+                <p>{{ scope.row.apartmentName }}</p>
+                <p>
+                  <span style="margin-right:7px;">{{ scope.row.price + '元' }}</span>
+                  <span>{{ scope.row.borrowType==1?'寓租贷':'' }}</span>
+                </p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="合同编号 / 期限 / 时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.no }}</p>
+                <p>
+                  <span style="margin-right:7px;">{{ scope.row.yearLimit + '年' }}</span>
+                  <span>{{ scope.row.beginDate + ' ~ ' + scope.row.endDate }}</span>
+                </p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="status_index==0"
+            label="申请时间">
+            <template slot-scope="scope">
+               <span>{{ scope.row.ct }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="status_index==1 || status_index==2"
+            label="审核人/审核时间/审核备注">
+            <template slot-scope="scope">
+                <p>
+                  <span style="margin-right:7px;">{{ scope.row.checkName }}</span>
+                  <span>{{ scope.row.checkDate }}</span>
+                </p>
+                <p>{{ '备注：' + scope.row.breakcontractReason }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="handle"
+            width="140"
+            label="操作"
+            :width="status_index==0?100:120">
+            <template slot-scope="scope">
+              <el-button type="primary" v-if="status_index==0" plain @click.stop="openDetail2(scope.row.id)">审核</el-button>
+              <el-button type="primary" v-if="status_index!=0" plain @click="dialogType='detail'" style="padding-left:0px;padding-right:0px;">查看合同</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          @current-change="currentChange"
+          @size-change="sizeChange"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      :title="dialogType=='detail'?'查看合同':'审核合同'"
+      :visible="dialog.detail"
+      width="70%"
+      :before-close="closeDetail">
+      <el-row v-loading="loading.detail" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <h1 class="title">审核合同</h1>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">合同编号</span>
+              <span class="detail-item" v-text="dialog.detail_msg.no"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">合同类别</span>
+              <span class="detail-item" v-text="dialog.detail_msg.borrowType==1?'寓租贷':''"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">合同金额</span>
+              <span class="detail-item" v-text="dialog.detail_msg.price"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">合同期限</span>
+              <span class="detail-item" v-text="dialog.detail_msg.yearLimit"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">合同时间</span>
+              <span class="detail-item" v-text="dialog.detail_msg.datetime"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">合同状态</span>
+              <span class="detail-item" v-text="dialog.detail_msg.stateText"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-tabs v-model="dialog.detail_msg.tabIndex">
+                <el-tab-pane label="借款合同" name="first" class="img-con">
+                  <img v-for="item of dialog.detail_msg.firstImage" :key="item.id" :src="item.bigImgurl"/>
+                </el-tab-pane>
+                <el-tab-pane label="借款信息表" name="second" class="img-con">
+                  <img v-for="item of dialog.detail_msg.secondImage" :key="item.id" :src="item.bigImgurl"/>
+                </el-tab-pane>
+                <el-tab-pane label="还款付息确认表" name="third" class="img-con">
+                  <img v-for="item of dialog.detail_msg.thirdImage" :key="item.id" :src="item.bigImgurl"/>
+                </el-tab-pane>
+                <el-tab-pane label="付款委托书" name="fourth" class="img-con">
+                  <img v-for="item of dialog.detail_msg.fourthImage" :key="item.id" :src="item.bigImgurl"/>
+                </el-tab-pane>
+              </el-tabs>
+            </el-col>
+          </el-row>
+        </el-col>
+      </el-row>
+      <template v-if="dialog.detail_msg.state==3 && dialogType!='detail'" slot="footer">
+        <el-button type="danger" style="background-color:#f2082e !important;border-color:#f2082e !important;" @click="openReject(dialog.detail_msg.id)">驳回</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="openAdopt(dialog.detail_msg.id)">通过</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="驳回合同"
+      width="30%"
+      :visible="dialog.reject"
+      :before-close="closeReject">
+      <el-row v-loading="loading.reject" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <p class="error-message">确定要驳回该项合同吗？</p>
+          <el-input type="textarea" placeholder="输入原因（选填）" v-model="dialog.reject_msg.content"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="submitReject">确认</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="通过合同"
+      width="30%"
+      :visible="dialog.adopt"
+      :before-close="closeAdopt">
+      <el-row v-loading="loading.adopt" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <p class="error-success">确定要通过该项合同吗？</p>
+          <el-input type="textarea" placeholder="输入原因（选填）" v-model="dialog.adopt_msg.content"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="submitAdopt">确认</el-button>
+      </template>
+    </el-dialog>
+	</el-main>
+</template>
+
+<script>
+import tool from "../../../static/js/tool.js";
+export default {
+  name: "Examine",
+  data() {
+    return {
+      dialogType: "", //查看详情 or 审批
+
+      status_index: 0,
+
+      loading: {
+        all: true, //整页的loading
+        detail: false, //详情的loading
+        reject: false, //提交驳回的loading
+        adopt: false //提交通过的loading
+      },
+
+      dialog: {
+        detail: false, //是否显示，查看详情弹出框
+
+        //详情弹出框内容
+        detail_msg: {
+          id: "",
+          tabIndex: "first", //tabs的选中
+          no: "", //合同编号
+          borrowType: "", //合同类别
+          price: "", //合同金额
+          yearLimit: "", //合同期限
+          datetime: "", //合同日期
+          state: "", //合同状态
+          stateText: "", //合同状态显示的文本
+          firstImage: [], //借款合同地址
+          secondImage: [], //借款信息表地址
+          thirdImage: [], //还款付息确认表地址
+          fourthImage: [] //付款委托书地址
+        },
+        reject: false, //是否显示，驳回弹出框
+        reject_msg: {}, //驳回弹出框内容
+        adopt: false, //是否显示，通过弹出框
+        adopt_msg: {} //通过弹出框内容
+      },
+
+      //筛选的过滤信息
+      screen: {
+        status: "3", //合同状态：0未打款 1已打款 2待签署 3公寓方签署完成，等待金融方审批 4审批驳回 5已结束（公寓方分期全部还清）
+        dateRange: [], //时间段
+        minPrice: "",
+        maxPrice: "",
+        no: "" //合同编号
+      },
+
+      //表格信息
+      table: {
+        tbody: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  },
+  computed: {
+    startTime: function() {
+      if (this.screen.dateRange.length > 0) {
+        return this.screen.dateRange[0];
+      } else {
+        return "";
+      }
+    },
+    endTime: function() {
+      if (this.screen.dateRange.length > 0) {
+        return this.screen.dateRange[1];
+      } else {
+        return "";
+      }
+    }
+  },
+  methods: {
+    /**-----显示，查看详情弹出框----- */
+    async openDetail(id) {
+      const self = this;
+
+      self.dialog.detail = true;
+      self.loading.detail = true;
+      self.dialog.detail_msg.id = id;
+
+      const { data: detailData } = await this.getDetail(id);
+
+      const { data: detailImageContract } = await this.getDetailImage(id, 2, 1); //借款合同
+      const { data: detailImageBorrow } = await this.getDetailImage(id, 2, 12); //借款信息表
+      const { data: detailImageRepay } = await this.getDetailImage(id, 2, 13); //还款信息表
+      const { data: detailImageMandte } = await this.getDetailImage(id, 2, 14); //付款委托书
+
+      if (detailData.status.code == 200) {
+        const contract = detailData.result;
+        self.dialog.detail_msg.no = contract.no;
+        self.dialog.detail_msg.borrowType = contract.borrowType;
+        self.dialog.detail_msg.price = contract.price + "元";
+        self.dialog.detail_msg.yearLimit = contract.yearLimit + "年";
+        self.dialog.detail_msg.datetime =
+          contract.beginDate + " 至 " + contract.endDate;
+        self.dialog.detail_msg.state = contract.status;
+        if (contract.status == 0) {
+          self.dialog.detail_msg.stateText = "已通过";
+        } else if (contract.status == 1) {
+          self.dialog.detail_msg.stateText = "已打款";
+        } else if (contract.status == 2) {
+          self.dialog.detail_msg.stateText = "待签署";
+        } else if (contract.status == 3) {
+          self.dialog.detail_msg.stateText = "待审核";
+        } else if (contract.status == 4) {
+          self.dialog.detail_msg.stateText = "已驳回";
+        } else if (contract.status == 5) {
+          self.dialog.detail_msg.stateText = "已结束";
+        } else if (contract.status == 6) {
+          self.dialog.detail_msg.stateText = "已违约";
+        }
+      }
+      if (detailImageContract.status.code == 200) {
+        const { pictureList: image } = detailImageContract.result;
+        self.dialog.detail_msg.firstImage = image;
+      }
+      if (detailImageBorrow.status.code == 200) {
+        const { pictureList: image } = detailImageBorrow.result;
+        self.dialog.detail_msg.secondImage = image;
+      }
+      if (detailImageRepay.status.code == 200) {
+        const { pictureList: image } = detailImageRepay.result;
+        self.dialog.detail_msg.thirdImage = image;
+      }
+      if (detailImageMandte.status.code == 200) {
+        const { pictureList: image } = detailImageMandte.result;
+        self.dialog.detail_msg.fourthImage = image;
+      }
+
+      self.loading.detail = false;
+    },
+    openDetail2(id) {
+      const self = this;
+      self.dialogType = "adopt";
+      self.openDetail(id);
+    },
+    /**-----隐藏，查看详情弹出框----- */
+    closeDetail() {
+      this.dialog.detail = false;
+    },
+
+    /**-----显示，驳回弹出框----- */
+    openReject(id) {
+      this.dialog.reject_msg.id = id;
+      this.dialog.reject = true;
+    },
+    /**-----隐藏，驳回弹出框----- */
+    closeReject() {
+      this.dialog.reject_msg.id = "";
+      this.dialog.reject_msg.content = "";
+      this.dialog.reject = false;
+    },
+
+    /**-----显示，通过弹出框----- */
+    openAdopt(id) {
+      this.dialog.adopt_msg.id = id;
+      this.dialog.adopt = true;
+    },
+    /**-----隐藏，通过弹出框----- */
+    closeAdopt() {
+      this.dialog.adopt_msg.id = "";
+      this.dialog.adopt_msg.content = "";
+      this.dialog.adopt = false;
+    },
+
+    /**-----当前页改变时调用----- */
+    currentChange(currentPage) {
+      const self = this;
+      self.table.currentPage = currentPage;
+      self.getList();
+    },
+
+    /**-----每页条目改变时调用----- */
+    sizeChange(pageSize) {
+      const self = this;
+      self.table.currentPage = 1;
+      self.table.pageSize = pageSize;
+      self.getList();
+    },
+
+    /**-----获取列表----- */
+    getList() {
+      const self = this;
+      self.loading.all = true;
+      self
+        .axios({
+          method: "post",
+          url: this.$store.state.api.contract.getList,
+          data: {
+            pageNo: self.table.currentPage,
+            pageSize: self.table.pageSize,
+            startTime: self.startTime,
+            endTime: self.endTime,
+            likeName: self.screen.no,
+            statusTo: self.screen.status
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading.all = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.table.tbody = data.result.list;
+            self.table.totalRecord = data.result.totalRecord;
+          }
+        })
+        .catch(() => {
+          self.loading.all = false;
+        });
+    },
+
+    /**-----获取详细数据----- */
+    getDetail(id) {
+      const self = this;
+      return self.axios({
+        method: "post",
+        url: this.$store.state.api.contract.getDetail,
+        data: {
+          id: id
+        }
+      });
+    },
+
+    /**-----获取合同图片----- */
+    getDetailImage(id, bigType, smallType) {
+      const self = this;
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.picture.getFile,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            bizId: id,
+            bigType: bigType,
+            smallType: smallType
+          }
+        }
+      });
+    },
+
+    //提交驳回
+    submitReject() {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      if (self.dialog.reject_msg.id) {
+        self.loading.reject = true;
+        self
+          .axios({
+            method: "post",
+            url: this.$store.state.api.contract.approStatus,
+            data: {
+              gcid: "0100099",
+              userid: userid,
+              params: {
+                id: self.dialog.reject_msg.id,
+                status: 4, //0未处理 1通过 2驳回
+                breakcontractReason: self.dialog.reject_msg.content
+              }
+            }
+          })
+          .then(response => {
+            //关闭loading
+            self.loading.reject = false;
+            const { data } = response;
+            if (data.status.code == 200) {
+              self.$alert("驳回成功！", "提示", {
+                callback: action => {
+                  self.dialog.reject = false;
+                  self.dialog.detail = false;
+                  self.table.currentPage = 1;
+                  self.getList();
+                }
+              });
+            }
+          })
+          .catch(error => {
+            self.loading.reject = false;
+          });
+      }
+    },
+
+    //提交通过
+    submitAdopt() {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      if (self.dialog.adopt_msg.id) {
+        self.loading.adopt = true;
+        self
+          .axios({
+            method: "post",
+            url: this.$store.state.api.contract.approStatus,
+            data: {
+              gcid: "0100099",
+              userid: userid,
+              params: {
+                id: self.dialog.adopt_msg.id,
+                status: 0, //0未处理 1通过 2驳回
+                breakcontractReason: self.dialog.adopt_msg.content
+              }
+            }
+          })
+          .then(response => {
+            //关闭loading
+            self.loading.adopt = false;
+            const { data } = response;
+            if (data.status.code == 200) {
+              self.$alert("通过成功！", "提示", {
+                callback: action => {
+                  self.dialog.adopt = false;
+                  self.dialog.detail = false;
+                  self.table.currentPage = 1;
+                  self.getList();
+                }
+              });
+            }
+          })
+          .catch(error => {
+            self.loading.adopt = false;
+          });
+      }
+    },
+
+    //搜索
+    search() {
+      const self = this;
+      self.table.currentPage = 1;
+      self.getList();
+    },
+
+    /**-----状态切换----- */
+    changeStatusTab(status, index) {
+      this.status_index = index;
+      this.table.currentPage = 1;
+      this.screen.status = status;
+      this.screen.dateRange = [];
+      this.screen.no = "";
+      this.getList();
+    },
+
+    /**-----点击单行时触发----- */
+    tableRowClick(row) {
+      const self = this;
+      if (row && row.id) {
+        const id = row.id;
+        self.dialogType = "detail";
+        self.openDetail(id);
+      }
+    }
+  },
+  created() {
+    this.getList();
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+.el-button--primary.is-plain {
+  background-color: #fff;
+  border-color: #188ff0;
+  border-width: 1px;
+  color: #188ff0;
+}
+/deep/ .el-textarea__inner {
+  padding: 10px 15px;
+  min-height: 100px !important;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-button--danger span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 80px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .el-tabs__header {
+  margin: 0px;
+}
+/deep/ .el-tabs__content {
+  margin: 0px -20px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .img-con {
+  background: #f6f6f6;
+  text-align: center;
+  padding: 30px 50px;
+}
+/deep/ .img-con img {
+  box-shadow: 0px 0px 12px #333;
+  max-width: 70%;
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 30px;
+}
+/deep/ .img-con img:last-child {
+  margin-bottom: 0px;
+}
+/deep/ .el-table {
+  min-height: calc(100vh - 315px);
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 24px;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_blue.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+.finance-state.yellow {
+  background: url(../../../static/image/icon_state_yellow.png) left top / 70px
+    30px no-repeat !important;
+}
+.finance-state.gray {
+  background: url(../../../static/image/icon_state_gray.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.black {
+  background: url(../../../static/image/icon_state_black.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.green {
+  background: url(../../../static/image/icon_state_green.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.blue {
+  background: url(../../../static/image/icon_state_blue.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.red {
+  background: url(../../../static/image/icon_state_red.png) left top / 70px 30px
+    no-repeat;
+}
+.finance-state.orange {
+  background: url(../../../static/image/icon_state_orange.png) left top / 70px
+    30px no-repeat;
+}
+.title {
+  color: #188ff0;
+  padding-left: 20px;
+  position: relative;
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  font-weight: normal;
+  font-size: 14px;
+}
+.title::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 18px;
+  background-color: #188ff0;
+  position: absolute;
+  top: 1px;
+  left: 0px;
+}
+.title.no-mark {
+  padding-left: 0px;
+}
+.title.no-mark::before {
+  content: none;
+}
+.detail-title {
+  font-size: 14px;
+  color: #000;
+  margin-right: 20px;
+}
+.detail-item {
+  font-size: 12px;
+  color: #777;
+}
+.detail-item.red {
+  color: #f2082e;
+}
+.division {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dfe4e6;
+  margin: 0px;
+  margin-bottom: 20px;
+}
+.error-message {
+  font-size: 14px;
+  color: #f2082e;
+  margin-bottom: 10px;
+}
+.error-success {
+  font-size: 14px;
+  color: #188ff0;
+  margin-bottom: 10px;
+}
+/deep/ .el-table__body-wrapper{
+  height: calc(100vh - 340px);
+}
+.el-main{
+  padding: 20px 20px 0 20px;
+}
+</style>

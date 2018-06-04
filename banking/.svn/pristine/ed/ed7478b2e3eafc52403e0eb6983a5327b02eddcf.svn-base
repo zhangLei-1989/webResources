@@ -1,0 +1,636 @@
+<template>
+<el-main v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+    <el-row class="search">
+      <el-col :span="24">
+        <el-form :inline="true" class="demo-form-inline" style="display:flex;;">
+          <el-form-item class="noMarginRight noMarginBottom" style="flex:1;">
+            <el-input placeholder="角色名称"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight noMarginBottom">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+	<div class="roleManger">
+		<div class="tableBox">
+        <el-table
+          :data="table.tbody"
+          border
+          style="width: 100%">
+          <el-table-column
+            prop="name"
+            label="名称">
+          </el-table-column>
+          <el-table-column
+            prop="ct"
+            label="创建时间">
+          </el-table-column>
+          <el-table-column
+            prop="et"
+            label="修改时间">
+          </el-table-column>
+          <el-table-column
+            prop="desc"
+            label="描述">
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="170">
+            <template slot-scope="scope">
+              <el-button type="text" @click="openAuthorityDialog(scope.row.id)">修改权限</el-button>
+              <el-button type="text" @click="edit(scope.row.id)">编辑</el-button>
+              <el-button type="text" @click="openDeleteDialog(scope.row.id)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+    </div>
+	</div>
+    <el-dialog
+      title="添加角色"
+      width="50%"
+      :visible="addDialogActive"
+      :before-close="closeDialog">
+      <el-row v-loading="loading.submit" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <el-form ref="ruleForm" label-width="110px" label-position="left">
+            <el-form-item label="角色名称：" required>
+              <el-input v-model="form.name"></el-input>
+            </el-form-item>
+            <el-form-item label="角色描述：" required>
+              <el-input v-model="form.desc"></el-input>
+            </el-form-item>
+          </el-form>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="save">确定</el-button>
+      </template>
+    </el-dialog>
+    <!--删除角色-->
+    <el-dialog
+      title="删除"
+      width="30%"
+      :visible="dialog.deleted"
+      :before-close="closeDeleteDialog">
+      <el-row v-loading="loading.deleted" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <p class="error-success">您确定要删除该角色吗？</p>
+          <el-input type="textarea" placeholder="请输入删除原因" v-model="dialog.deleted_msg.deleteWhy"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="deleted">确定</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="修改权限"
+      width="80%"
+      :visible="dialog.authority"
+      :before-close="closeAuthorityDialog">
+      <el-row v-loading="loading.authority" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <el-tabs v-model="tabs.activeName">
+            <el-tab-pane v-for="(item,index) of tabs.data" :key="item.id" :label="item.name" :name="item.id">
+                <el-row v-for="(item2,index2) of item.children" :key="item2.id" :gutter="40">
+                    <el-col :span="4" style="border-right:1px dashed #ccc;">
+                      <el-checkbox :indeterminate="item2.indeterminate" v-model="item2.isCheck" @change="checkboxAllChange(index,index2)">{{item2.name}}</el-checkbox>
+                    </el-col>
+                    <el-col :span="20">
+                      <el-checkbox-group v-model="item2.isCheckData" @change="checkboxChange(index,index2)">
+                          <el-checkbox v-for="item3 of item2.children" :key="item3.id" :label="item3.id">{{item3.name}}</el-checkbox>
+                      </el-checkbox-group>
+                    </el-col>
+                  </el-row>
+              </el-tab-pane>
+          </el-tabs>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="saveAuthority">保存</el-button>
+      </template>
+    </el-dialog>
+</el-main>
+</template>
+
+<script>
+import validation from "../../../static/js/validation.js";
+import { mapState } from "vuex";
+export default {
+  name: "RoleManger",
+  data() {
+    return {
+      //loading信息
+      loading: {
+        all: true, //整页的loading
+        deleted: false, //删除的loading
+        authority: true, //修改权限的loading
+        submit: false //提交的loading
+      },
+
+      tabs: {
+        activeName: "", //激活的名称
+        data: [] //展示的树
+      },
+
+      //弹出框信息
+      dialog: {
+        deleted: false, //删除弹出框
+        deleted_msg: {
+          id: "", //角色id
+          deleteWhy: "" //删除角色的原因
+        },
+        authority: false, //修改权限
+        authority_msg: {
+          id: ""
+        }
+      },
+
+      //表单信息
+      form: {
+        id: "",
+        name: "", //角色名称
+        desc: "" //角色描述
+      },
+
+      //表格信息
+      table: {
+        tbody: [], //表格数据
+        currentPage: 1, //当前页
+        pageSize: 10, //每页条数
+        totalRecord: 0 //总条数
+      }
+    };
+  },
+  computed: mapState({
+    addDialogActive: state => state.roleManger.roleDialogActive
+  }),
+  methods: {
+    //关闭，新增 or 修改弹出框
+    closeDialog() {
+      this.resetForm();
+      this.$store.commit("partners/tooglePartnersDialogActive", false);
+    },
+
+    //打开删除弹出框
+    openDeleteDialog(id) {
+      this.dialog.deleted_msg.id = id;
+      this.dialog.deleted = true;
+    },
+
+    //打开删除弹出框
+    closeDeleteDialog() {
+      this.dialog.deleted = false;
+    },
+
+    //将部门的列表数据拼接为tree型数据
+    getTree(topList, list) {
+      const self = this;
+      for (var i = 0; i < topList.length; i++) {
+        //获取子级列表
+        var children = list.filter(item => topList[i].id == item.parentId);
+        if (children.length > 0) {
+          children = children.map(item => {
+            item.isCheck = item.isChecked == 0 ? false : true;
+            item.isCheckData = [];
+            item.indeterminate = false;
+            return item;
+          });
+          //递归
+          self.getTree(children, list);
+          topList[i].children = children;
+          topList[i].isCheckData = children
+            .filter(item => item.isChecked != 0)
+            .map(item => {
+              return item.id;
+            });
+          if (topList[i].children.length == topList[i].isCheckData.length) {
+            topList[i].isCheck = true;
+            topList[i].indeterminate = false;
+          } else if (topList[i].isCheckData.length > 0) {
+            topList[i].isCheck = false;
+            topList[i].indeterminate = true;
+          } else {
+            topList[i].isCheck = false;
+            topList[i].indeterminate = false;
+          }
+        }
+      }
+    },
+
+    //打开修改权限弹出框
+    async openAuthorityDialog(id) {
+      const self = this;
+      self.dialog.authority_msg.id = id;
+      self.dialog.authority = true;
+      self.loading.authority = true;
+      const { data } = await self.getResources(id);
+      if (data.status.code == 200) {
+        let { list } = data.result;
+        list = list.map(item => {
+          if (item.zIndex == 1) {
+            item.parentId = "";
+          }
+          return item;
+        });
+        let topList = list.filter(item => {
+          return item.zIndex == 1;
+        });
+        self.getTree(topList, list);
+        self.tabs.data = topList;
+        if (topList.length > 0) {
+          self.tabs.activeName = topList[0].id;
+        }
+      }
+      self.loading.authority = false;
+    },
+
+    //打开修改权限弹出框
+    closeAuthorityDialog() {
+      this.dialog.authority = false;
+    },
+
+    //重置表单
+    resetForm() {
+      const self = this;
+      self.form.id = "";
+      self.form.name = "";
+      self.form.desc = "";
+    },
+
+    //3级选择
+    checkboxChange(index, index2) {
+      const data = this.tabs.data[index].children[index2];
+      if (data.isCheckData.length == data.children.length) {
+        data.indeterminate = false;
+        data.isCheck = true;
+      } else if (data.isCheckData.length == 0) {
+        data.indeterminate = false;
+        data.isCheck = false;
+      } else {
+        data.indeterminate = true;
+      }
+    },
+
+    //2级全选
+    checkboxAllChange(index, index2) {
+      const data = this.tabs.data[index].children[index2];
+      data.indeterminate = false;
+      if (data.isCheck) {
+        if (data.children) {
+          data.isCheckData = data.children.map(item => {
+            return item.id;
+          });
+        }
+      } else {
+        data.isCheckData = [];
+      }
+    },
+
+    //编辑
+    edit(id) {
+      const self = this;
+      self.loading.submit = true;
+      self.$store.commit("roleManger/toogleRoleDialogActive", true);
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.role.getList,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+            id: id
+          }
+        })
+        .then(response => {
+          self.loading.submit = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            const role = data.result.list[0];
+            if (role) {
+              self.form.id = role.id;
+              self.form.name = role.name;
+              self.form.desc = role.desc;
+            }
+          }
+        })
+        .catch(() => {
+          self.loading.submit = false;
+        });
+    },
+
+    //保存角色
+    save() {
+      const self = this;
+
+      const validate = new validation();
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.name,
+        "角色名称不能为空！"
+      );
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.desc,
+        "角色描述不能为空！"
+      );
+      const result = validate.startValidate();
+      if (result) {
+        self.$message.error(result);
+      } else {
+        if (!self.loading.submit) {
+          self.loading.submit = true;
+          self
+            .axios({
+              method: "post",
+              url: self.$store.state.api.setting.role.save,
+              data: {
+                gcid: "0100099",
+                userid: "ab0f10cd02094f7b9b82b82088742557",
+                token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+                id: self.form.id,
+                name: self.form.name,
+                desc: self.form.desc
+              }
+            })
+            .then(response => {
+              self.loading.submit = false;
+              const { data } = response;
+              if (data.status.code == 200) {
+                self.$alert("操作成功", "提示", {
+                  callback: action => {
+                    self.init();
+                    self.closeDialog();
+                  }
+                });
+              }
+            })
+            .catch(error => {
+              self.loading.submit = false;
+            });
+        }
+      }
+    },
+
+    //保存权限
+    saveAuthority() {
+      const self = this;
+
+      //数据拼接
+      let oneResourcesId = "";
+      let resourcesList = [];
+      const choiceData = self.tabs.data.filter(
+        item => item.id == self.tabs.activeName
+      )[0];
+      oneResourcesId = choiceData.id;
+
+      const addList = function(obj) {
+        if (obj.zIndex == 1) {
+          resourcesList.push({
+            id: obj.id,
+            scope: 0
+          });
+        } else if (obj.zIndex == 2) {
+          if (obj.isCheck || obj.indeterminate) {
+            resourcesList.push({
+              id: obj.id,
+              scope: 0
+            });
+            obj.isCheckData.forEach(item => {
+              resourcesList.push({
+                id: item,
+                scope: 0
+              });
+            });
+          }
+        }
+        if (obj.children) {
+          obj.children.forEach(item => addList(item));
+        }
+      };
+      addList(choiceData);
+
+      self.loading.authority = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.roleRsources.batchSave,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+            params: {
+              roleId: self.dialog.authority_msg.id,
+              oneResourcesId: oneResourcesId,
+              resourcesList: resourcesList
+            }
+          }
+        })
+        .then(response => {
+          self.loading.authority = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.$alert("操作成功", "提示", {
+              callback: action => {
+                self.dialog.authority = false;
+              }
+            });
+          }
+        })
+        .catch(error => {
+          self.loading.authority = false;
+        });
+    },
+
+    //删除
+    deleted() {
+      const self = this;
+      if (self.dialog.deleted_msg.id && !self.loading.deleted) {
+        self.loading.deleted = true;
+        self
+          .axios({
+            method: "post",
+            url: self.$store.state.api.setting.role.deleteById,
+            data: {
+              gcid: "0100099",
+              userid: "ab0f10cd02094f7b9b82b82088742557",
+              token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+              id: self.dialog.deleted_msg.id,
+              deleteWhy: self.dialog.deleted_msg.deleteWhy
+            }
+          })
+          .then(response => {
+            self.loading.deleted = false;
+            const { data } = response;
+            if (data.status.code == 200) {
+              self.$alert("操作成功", "提示", {
+                callback: action => {
+                  self.init();
+                  self.closeDeleteDialog();
+                }
+              });
+            }
+          })
+          .catch(error => {
+            self.loading.deleted = false;
+          });
+      }
+    },
+
+    //获取资源列表
+    getResources(id) {
+      const self = this;
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.roleRsources.getList,
+        //url: "http://192.168.107.29:52020/cms/sys/role_resources/get_list",
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            roleId: id
+          }
+        }
+      });
+    },
+
+    //页面初始化
+    init() {
+      const self = this;
+      self.loading.all = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.role.getList,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3"
+          }
+        })
+        .then(response => {
+          self.loading.all = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.table.tbody = data.result.list;
+          }
+        })
+        .catch(error => {
+          self.loading.all = false;
+        });
+    }
+  },
+  created() {
+    this.init();
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-textarea__inner {
+  padding: 10px 15px;
+  min-height: 100px !important;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+  margin-bottom: 20px;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-form--label-left .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/deep/ .noLabel .el-form-item__content {
+  margin-left: 0px !important;
+}
+/deep/.roleTable th,
+/deep/.roleTable td {
+  text-align: center;
+}
+/deep/.roleManger_top {
+  margin-bottom: 20px;
+  height: 96px;
+  background: #fff;
+}
+/deep/ .roleManger_top .el-row {
+  padding-top: 26px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+.roleManger_top .searchBtn {
+  width: 100px;
+  display: inline-block;
+  vertical-align: bottom;
+  width: 84px;
+  text-align: center;
+  line-height: 40px;
+  height: 40px;
+  background: #188ff0;
+  color: #fff;
+}
+.tableBox {
+  overflow: auto;
+  min-height: calc(100vh - 210px);
+  border: 20px solid #fff;
+}
+.error-message {
+  font-size: 14px;
+  color: #f2082e;
+  margin-bottom: 10px;
+}
+.error-success {
+  font-size: 14px;
+  color: #188ff0;
+  margin-bottom: 10px;
+}
+</style>

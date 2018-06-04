@@ -1,0 +1,81 @@
+<template>
+	<el-container>
+		<!-- 二级路由 -->
+		<el-header class="header" height="60px">
+			<cms-header :tabs="tabs"></cms-header>
+		</el-header>
+		<!-- 二级路由 -->
+
+	<router-view></router-view>
+
+	</el-container>
+</template>
+
+<script>
+import tool from "../../static/js/tool.js";
+import cmsHeader from "@/components/public/CMSHeader";
+export default {
+  name: "Cooperation",
+  data() {
+    const self = this;
+    return {
+      tabs: []
+    };
+  },
+  components: {
+    cmsHeader
+  },
+  created() {
+    const self = this;
+    //2级菜单
+    const router = [
+      {
+        id: "e11f2863785641f28b14b1d15ade2c67",
+        name: "合作方",
+        path: "/cooperation/partners",
+        btns: [
+          {
+            name: "添加",
+            click: function() {
+              self.$store.commit("partners/tooglePartnersDialogActive", true);
+            }
+          }
+        ]
+      }
+    ];
+
+    const routerNew = [];
+
+    const userInfo = tool.session.get("userInfo");
+    if (!userInfo) {
+      self.$router.replace("/login");
+    } else {
+      //2级权限控制（审批）
+      const systemResourcesList = userInfo.systemResourcesList;
+      if (systemResourcesList) {
+        const authorization = systemResourcesList;
+        const twoAuthor = authorization.filter(
+          item =>
+            item.zIndex == 2 &&
+            item.parentId == "fad1cdf8288c4c5ea7ceb95948caa1dd"
+        );
+        twoAuthor.forEach(item => {
+          router.forEach(item2 => {
+            if (item.id == item2.id) {
+              routerNew.push(item2);
+            }
+          });
+        });
+      }
+    }
+
+    self.tabs = routerNew;
+  }
+};
+</script>
+
+<style scoped>
+.main {
+  background: #f2f3f5;
+}
+</style>

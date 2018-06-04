@@ -1,0 +1,86 @@
+<template>
+	<el-container id="roleContainer">
+		<table-widget :tableOption="tableOption"></table-widget>
+	</el-container>
+</template>
+
+<script>
+import tableWidget from "@/components/public/TableWidget";
+export default {
+  name: "Partners",
+  data() {
+    return {
+      tableOption: {
+        tags: [
+          { name: "全部", number: 1490, type: "" },
+          { name: "即将搬入", number: 2, type: "" },
+          { name: "在租中", number: 566, type: "" },
+          { name: "即将搬出", number: 33, type: "" },
+          { name: "已到期", number: 314, type: "" },
+          { name: "已退租", number: 437, type: "" },
+          { name: "待确认", number: 0, type: "" },
+          { name: "待生效", number: 118, type: "" },
+          { name: "已作废", number: 25, type: "" }
+        ],
+        thead: [
+          {
+            prop: "contractNumber",
+            label: "订单号"
+          },
+          {
+            prop: "name",
+            label: "公寓名称"
+          },
+          {
+            prop: "roomNumber",
+            label: "楼盘/房型/房号"
+          },
+          {
+            prop: "mobile",
+            label: "承诺人/手机/租期"
+          },
+          {
+            prop: "money",
+            label: "押金/租金/付款方式"
+          },
+          {
+            prop: "nextDate",
+            label: "下期收租日"
+          },
+          {
+            prop: "state",
+            label: "租约状态"
+          }
+        ],
+        data: [
+          {
+            contractNumber: "20170102847",
+            name: "荣尚荟公寓",
+            roomNumber: "金地公寓/豪华大床房/201",
+            mobile: "高雨婷/18672920380/2017-12-12至2018-12-12",
+            money: "2000元押金/2300元/月 * 1年",
+            nextDate: "2017-12-12",
+            state: "租期中"
+          },
+          {
+            contractNumber: "20170102847",
+            name: "荣尚荟公寓",
+            roomNumber: "金地公寓/豪华大床房/201",
+            mobile: "高雨婷/18672920380/2017-12-12至2018-12-12",
+            money: "2000元押金/2300元/月 * 1年",
+            nextDate: "",
+            state: "已退房"
+          }
+        ]
+      }
+    };
+  },
+  components: {
+    tableWidget
+  }
+};
+</script>
+
+<style scoped>
+
+</style>

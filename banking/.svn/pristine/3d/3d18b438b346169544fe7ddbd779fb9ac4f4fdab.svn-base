@@ -1,0 +1,100 @@
+*{
+    font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+a{
+    text-decoration: none;
+}
+
+html,body{
+    margin: 0px;
+    padding: 0px;
+}
+
+h1,h2,h3,h4,h5,h6,p{
+    margin: 0px;
+}
+
+ul,ol,li{
+    list-style: none;
+}
+a{
+	text-decoration: none;
+}
+
+.font12{
+    font-size: 12px;
+}
+.font14{
+    font-size: 14px;
+}
+.font16{
+    font-size: 16px;
+}
+.font18{
+    font-size: 18px;
+}
+.font20{
+    font-size: 20px;
+}
+
+.floatLeft{
+    float: left;
+}
+.floatRight{
+    float: right;
+}
+
+.noPadding{
+    padding: 0px !important;
+}
+.noPaddingLeft{
+    padding-left: 0px !important;
+}
+.noPaddingRight{
+    padding-right: 0px !important;
+}
+.noPaddingTop{
+    padding-top: 0px !important;
+}
+.noPaddingBottom{
+    padding-bottom: 0px !important;
+}
+
+.noMargin{
+    margin: 0px !important;
+}
+.noMarginLeft{
+    margin-left: 0px !important;
+}
+.noMarginRight{
+    margin-right: 0px !important;
+}
+.noMarginTop{
+    margin-top: 0px !important;
+}
+.noMarginBottom{
+    margin-bottom: 0px !important;
+}
+
+.el-main {
+    background: #f2f3f5;
+}
+
+/******tags******/
+.el-tag--cms{
+    color: #999999;
+    background: none;
+    border-width: 0px;
+    height: auto;
+    line-height: normal;
+    padding: 0px;
+    margin-right: 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.el-tag--cms.active{
+    color: #ed0536;
+}

@@ -1,0 +1,36 @@
+.main-bg-color{
+    background-color: #188ff0 !important;
+}
+.main-font-color{
+    color: #188ff0 !important;
+}
+
+.el-tag--cms.active{
+    color: #188ff0 !important;
+}
+
+/*****login*****/
+.login-form .title span::after{
+    background-color: #188ff0 !important;
+}
+.form-item .btn-login{
+    background-color: #188ff0 !important;
+}
+
+/*****home*****/
+.el-menu-item.is-active::before{
+    background-color: #188ff0 !important;
+}
+
+/*****public/CMSHeader*****/
+.nav-item a.router-link.router-link-active{
+    color: #188ff0 !important;
+}
+.nav-item a.router-link.router-link-active::after{
+    background-color: #188ff0 !important;
+}
+.el-button--danger {
+    background: #188ff0 !important;
+    border-color: #188ff0 !important;
+  }
+  

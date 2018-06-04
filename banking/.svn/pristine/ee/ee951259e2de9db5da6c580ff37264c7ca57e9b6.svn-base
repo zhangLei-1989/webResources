@@ -1,0 +1,87 @@
+<template>
+	<el-container id="roleContainer">
+		<table-widget :tableOption="tableOption"></table-widget>
+	</el-container>
+</template>
+
+<script>
+import tableWidget from "@/components/public/TableWidget";
+export default {
+  name: "apartmentRole",
+  data() {
+    return {
+      tableOption: {
+        thead: [
+          {
+            prop: "name",
+            label: "角色名称"
+          },
+          {
+            prop: "createDatetime",
+            label: "创建时间"
+          },
+          {
+            prop: "updateDatetime",
+            label: "修改时间"
+          },
+          {
+            prop: "describe",
+            label: "描述"
+          }
+        ],
+        data: [
+          {
+            name: "管理员",
+            createDatetime: "2017-08-10",
+            updateDatetime: "2017-09-10",
+            describe: "拥有管理员权限，最高权限"
+          },
+          {
+            name: "保洁",
+            createDatetime: "2017-08-10",
+            updateDatetime: "2017-09-10",
+            describe: "保洁工作人员"
+          },
+          {
+            name: "经理",
+            createDatetime: "2017-08-10",
+            updateDatetime: "2017-09-10",
+            describe: "管理门店，拥有单店管理最高权限"
+          },
+          {
+            name: "财务",
+            createDatetime: "2017-08-10",
+            updateDatetime: "2017-09-10",
+            describe: "查看运营，财务统计报表"
+          }
+        ],
+        controButton: [
+          {
+            name: "修改权限",
+            fn: "deleteRow(scope.$index, tableData)",
+            event: "@click"
+          },
+          {
+            name: "编辑",
+            fn: "deleteRow(scope.$index, tableData)",
+            event: "@click"
+          },
+          {
+            name: "删除",
+            fn: "deleteRow(scope.$index, tableData)",
+            event: "@click"
+          }
+        ]
+      }
+    };
+  },
+  mounted() {},
+  components: {
+    tableWidget
+  }
+};
+</script>
+
+<style scoped>
+
+</style>

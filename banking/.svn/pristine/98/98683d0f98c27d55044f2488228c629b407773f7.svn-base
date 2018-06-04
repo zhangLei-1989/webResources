@@ -1,0 +1,76 @@
+<template>
+	<el-container id="roleContainer">
+		<table-widget :tableOption="tableOption"></table-widget>
+	</el-container>
+</template>
+
+<script>
+import tableWidget from "@/components/public/TableWidget";
+export default {
+  name: "WaitExaminaApproval",
+  data() {
+    return {
+      tableOption: {
+        thead: [
+          {
+            prop: "state",
+            label: "状态"
+          },
+          {
+            prop: "name",
+            label: "借款人/金额/用款时间"
+          },
+          {
+            prop: "message",
+            label: "房源信息"
+          },
+          {
+            prop: "type",
+            label: "类别/还款方式/申请时间"
+          }
+        ],
+        controButton: [
+          {
+            name: "审批",
+            fn: "deleteRow(scope.$index, tableData)",
+            event: "@click"
+          }
+        ],
+        data: [
+          {
+            state: "待审批",
+            name: "世纪源公寓公司 \r\n 5,000,000元    2017-11-30 ",
+            message: "北京市海淀区西二旗智学苑 3号楼5单元601室",
+            type: "寓租贷    每月等额 2017-11-30 16:20:12"
+          },
+          {
+            state: "待审批",
+            name: "世纪源公寓公司 5,000,000元    2017-11-30 ",
+            message: "北京市海淀区西二旗智学苑 3号楼5单元601室",
+            type: "寓租贷    每月等额 2017-11-30 16:20:12"
+          },
+          {
+            state: "待审批",
+            name: "世纪源公寓公司 5,000,000元    2017-11-30 ",
+            message: "北京市海淀区西二旗智学苑 3号楼5单元601室",
+            type: "寓租贷    每月等额 2017-11-30 16:20:12"
+          },
+          {
+            state: "待审批",
+            name: "世纪源公寓公司 5,000,000元    2017-11-30 ",
+            message: "北京市海淀区西二旗智学苑 3号楼5单元601室",
+            type: "寓租贷    每月等额 2017-11-30 16:20:12"
+          }
+        ]
+      }
+    };
+  },
+  components: {
+    tableWidget
+  }
+};
+</script>
+
+<style scoped>
+
+</style>

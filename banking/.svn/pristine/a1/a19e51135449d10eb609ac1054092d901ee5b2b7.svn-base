@@ -1,0 +1,123 @@
+<template>
+<el-container>
+	<!-- 二级路由 -->
+	<el-header class="header" height="60px">
+		<cms-header :tabs="tabs"></cms-header>
+	</el-header>
+	<!-- 二级路由 -->
+
+  <router-view></router-view>
+
+</el-container>
+
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+
+export default {
+  name: "setting",
+  data() {
+    const self = this;
+    return {
+      activeName: "first",
+      tabs: [
+        {
+          name: "部门管理",
+          path: "/setting/apartmentRole",
+          btns: [
+            {
+              name: "添加部门",
+              click: function() {
+                self.$store.commit(
+                  "apartmentRole/toogleDepartmentDialogActive",
+                  true
+                );
+              }
+            }
+          ]
+        },
+        {
+          name: "角色管理",
+          path: "/setting/RoleManger",
+          btns: [
+            {
+              name: "添加角色",
+              click: function() {
+                self.$store.commit("roleManger/toogleRoleDialogActive", true);
+              }
+            }
+          ]
+        },
+        {
+          name: "员工管理",
+          path: "/setting/StaffManger",
+          btns: [
+            {
+              name: "添加员工",
+              click: function() {
+                self.$store.commit("staffManger/toogleStaffDialogActive", true);
+              }
+            }
+          ]
+        },
+        { name: "字典管理", path: "/setting/DictManger" },
+        {
+          name: "企业公告",
+          path: "/setting/CorporateBulletin",
+          btns: [
+            {
+              name: "添加员工",
+              click: function() {
+                self.$store.commit("corporateBulletin/toogleCorporateDialogActive", true);
+              }
+            }
+          ]
+        }
+      ]
+    };
+  },
+  components: {
+    cmsHeader
+  }
+};
+</script>
+
+<style scoped>
+.router-link {
+  height: 100%;
+}
+.main {
+  background: #f2f3f5;
+}
+.router-link-active {
+  color: red;
+  border-bottom: 1px solid red;
+}
+.el-header {
+  background-color: #fff;
+  color: #333;
+  line-height: 60px;
+}
+
+.el-aside {
+  color: #333;
+}
+.el-row {
+  margin-bottom: 20px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+.el-col {
+  border-radius: 4px;
+}
+.grid-content {
+  border-radius: 4px;
+  min-height: 36px;
+}
+.row-bg {
+  padding: 10px 0;
+  background-color: #f9fafc;
+}
+</style>

@@ -1,0 +1,112 @@
+//服务器地址
+//const server_address = 'http://test.finance.efanghang.com:52011'
+//const server_address = 'http://192.168.100.11:52011' //财务测试地址
+// const server_address = 'http://192.168.106.123:52011' //审批测试地址
+//const server_address = 'http://192.168.106.118:52011' //审批测试地址
+const server_address = 'http://test.finance.efanghang.com:52011'//审批测试地址
+//const server_address = 'http://192.168.100.11:52011' //财务测试地址
+
+
+//服务器api地址
+const api = {
+
+    //接口地址
+    setting: {  //系统设置
+        login: "/v2/jjr_user_login/pc_login",  //登录
+        department: {  //部门
+            getList: "/v2/sys/department/get_list",  //部门列表
+            save: "/v2/sys/department/save",  //部门保存 or 修改
+            deleteById: '/v2/sys/department/delete_by_id'  //部门删除
+        },
+        role: {  //角色
+            getList: "/v2/sys/role/get_list",  //角色查询
+            save: '/v2/sys/role/save',  //角色保存
+            deleteById: '/v2/sys/role/delete_by_id'  //角色删除
+        },
+        roleRsources: {  //角色权限
+            getList: '/v2/sys/role_resources/get_list',  //获取角色权限
+            batchSave: "/v2/sys/role_resources/batch_save"   //角色权限保存
+        },
+        systemResources: {  //资源管理
+            getList: '/v2/sys/system_resources/get_list'  //获取资源
+        },
+        location: {
+            cityGetList: "/v2/location/city/get_list",  //获取城市列表
+            townGetList: "/v2/location/town/get_list",  //获取区县列表
+            districtGetList: "/v2/location/district/get_list"  //获取商圈列表
+        },
+        tableJjrUser: {  //员工管理
+            getList: "/v2/sys/table_jjr_user/get_list",  //获取员工列表
+            save: "/v2/sys/table_jjr_user/save",  //员工保存 or 修改
+            get: "/v2/sys/table_jjr_user/get",  //员工明细查看
+            deleteById: '/v2/sys/table_jjr_user/delete_by_id'  //删除
+        },
+        companyNotice: {  //企业公告
+            getList: "/v2/company/company_notice/get_list",  //获取企业公告
+            get: "/v2/company/company_notice/get",  //获取企业公告详情
+            insert: '/v2/company/company_notice/insert',  //添加公告,
+            deleteById: "/v2/company/company_notice/delete_by_id"  //删除公告
+        },
+        ziDian: {  //字典管理
+            getListByMark: '/v2/sys/zi_dian/get_list_by_mark',  //字典查询费用列表
+            get: "/v2/sys/zi_dian/get",  //字典多条件查找返回单个对象
+            save: "/v2/sys/zi_dian/save"  //字典保存
+        }
+    },
+    borrowApply: {  //审批
+        getList: "/v2/contract/borrow_apply/get_list",  //获取审批列表
+        getBorrowApplyList: "/v2/contract/borrow_apply/get_borrowApplyList",  //获取审批详情
+        approStatus: "/v2/contract/borrow_apply/appro_Status",  //提交审批
+        creatContract: "/v2/contract/borrow_apply/creat_Contract",  //生成合同
+        getRatePriceList: "/v2/contract/borrow_apply/get_ratePriceList"  //计算收支
+    },
+    contract: {  //合同
+        getList: "/v2/contract/contract/get_list",  //获取合同列表
+        getList2: "/v2/contract/contract/get_some_status",  //获取合同列表(已完成)
+        getDetail: "/v2/contract/contract/get",  //获取合同的详情
+        approStatus: '/v2/contract/contract/appro_Status'  //提交合同
+    },
+    basePartner: {  //合作方
+        getList: "/v2/base/base_partner/get_list",  //获取合作方列表
+        update:'/v2/base/base_partner/update_and_history',  // 修改授信额度
+        saveParner:'/v2/base/base_partner/save', //添加合作方
+        getHistory:'/v2/base/base_credit_history/get', // 查看历史授信额度
+        houseList:'/v2/base/base_partner/get_house_list'  //合作中的房源
+    },
+    finance: { // 财务配置
+        receivable: '/v2/balance/finance_bill/receivable', // 合同应收数据
+        alreadyCollect: '/v2/balance/finance_bill/finace_data', // 已收
+        financeReject: '/v2/balance/finance_bill/finance_Y_reject',//
+        feeDetails: '/v2/balance/finance_bill/exempt_late_fee_details',
+        financeReriods: '/v2/balance/finance_bill/finance_periods', //获取详细还款数据
+        financeAffirmPrice: '/v2/balance/finance_bill/finance_affirm_price',
+        exemptLateFee: '/v2/balance/finance_bill/exempt_late_fee',
+        affirmMessage: '/v2/balance/finance_bill/get_affirm_message', // 表单提交函数(产生了滞纳金)
+        getListNoPayFinance: '/v2/balance/finance_bill/get_list_NoPayFinance',
+        affirmToPrice: '/v2/balance/finance_bill/affirm_to_price', //确认打款
+    },
+    picture: {  //获取文件
+        getFile: "/v2/accessory/picture/getfile_or_imgurl"  //获取图片或文件
+    }
+
+}
+
+//自动给接口地址添加域名
+const autoAddServerAddress = function (obj) {
+
+    const result = Object.create(null)
+
+    for (let key in obj) {
+
+        if (typeof obj[key] == 'object') {
+            result[key] = autoAddServerAddress(obj[key])
+        } else {
+            result[key] = server_address + obj[key]
+        }
+
+    }
+    return result
+
+}
+
+export default autoAddServerAddress(api)

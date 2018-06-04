@@ -1,0 +1,643 @@
+<template>
+  <el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="searchMsg" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="searchMsg.minPrice" placeholder="最低" style="width:100px;"></el-input>
+            —
+            <el-input v-model="searchMsg.maxPrice" placeholder="最高" style="width:100px;"></el-input>
+          </el-form-item>
+          <el-form-item style="width: 360px;margin-right: 10px;">
+            <span style="margin-left:10px;">合同时间</span>
+            <el-date-picker
+              size="large"
+              type="daterange"
+              v-model="searchMsg.time"
+              range-separator="—"
+              value-format="yyyy-MM-dd"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="searchMsg.likeName" placeholder="合同编号"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="search">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+    <div  ref="table" class="tableDate">
+      <el-table :data="listResult.list" stripe>
+        <el-table-column
+          prop="a1"
+          label="状态">
+          <template slot-scope="scope">
+            <span class="finance-state orange">待打款</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="a2"
+          label="借款人 / 金额 / 类别">
+          <template slot-scope="scope">
+            <p>{{scope.row.apartmentName}}</p>
+            <p><span style="width: 60px;display: inline-block">{{scope.row.price}}元</span> <span>寓租贷</span></p>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="a3"
+          label="合同编号 / 期限 / 时间">
+          <template slot-scope="scope">
+            <p>{{scope.row.no}}</p>
+            <p>{{scope.row.yearLimit}}年 <span>{{scope.row.beginDate}}</span>~<span>{{scope.row.endDate}} </span></p>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="a4"
+          label="审核人 / 审核时间 / 审核备注">
+          <template slot-scope="scope">
+            <p><span style="width: 60px;display:inline-block;">{{scope.row.nickName}} </span><span>{{scope.row.et}}</span></p>
+            <p>备注:{{scope.row.remark?scope.row.remark:'无'}}</p>
+          </template>
+        </el-table-column>
+        <el-table-column
+          fixed="right"
+          prop="handle"
+          label="操作"
+          width="130">
+          <template slot-scope="scope">
+            <el-button @click="confirmMoney(scope.row)">确认打款</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <el-row>
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="pageSize"
+          class="searchPagination"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <!--弹框 确认打款合同 -->
+    <el-dialog
+      class="confirmMoney"
+      :visible.sync="confirmMoneyBtn"
+      width="550px"
+      title="确认打款">
+      <div class="confirmMoney_top">
+        <span>总计 : </span>
+        <span>¥{{currentItem.price}}</span>
+      </div>
+      <div class="input_group">
+        <div class="input_item item_money">
+          <label>打款金额</label>
+          <input type="text" v-model="currentItem.financePrice">
+        </div>
+        <div class="input_item ">
+          <label>打款时间</label>
+          <el-date-picker
+            v-model="time"
+            type="datetime"
+            placeholder="选择日期时间">
+          </el-date-picker>
+        </div>
+      </div>
+      <div class="notice">
+        <span>上传打款证明</span>
+        <em>提示 : </em>
+        <span>上传本次打款的所有银行回执单，照片须清晰完整</span>
+      </div>
+      <div class="upload">
+        <el-upload   ref="upload"
+          action="http://test.finance.efanghang.com/UploadHouseServlet?server=upload&"
+          list-type="picture-card"
+          :on-preview="handlePictureCardPreview"
+          :on-success="uploadSuccess"
+          :on-error="uploadFail"
+          :on-remove="handleRemove">
+          <i class="el-icon-plus"></i>
+          <div class="el-upload__text"></em></div>
+        </el-upload>
+      </div>
+      <div class="upload_msg">
+        <span>二维码上传</span>
+        <span>同步上传图片</span>
+      </div>
+      <div class="dialog-footer" slot="footer">
+        <span class="sureBtn" @click="sureMoney">确认打款</span>
+      </div>
+    </el-dialog>
+  </el-main>
+</template>
+
+<script>
+  export default {
+    name: "WaitMoneyContract",
+    data() {
+      return {
+        loading: false,
+        height:'', //数据高度
+        listResult: {   // table 总数据
+          list:[]
+        },
+        pageSize: 5,  //分页每页数据数量
+        currentPage: 1, //当前分页页码
+        totalRecord: 0, // 总数据量
+        confirmMoneyBtn: false, //确认打款弹框
+        currentItem:{
+          financePrice:''
+        }, //当前操作行
+        time:'',//打款时间
+        searchMsg: {
+          minPrice: '', //最低金额
+          maxPrice: '',  //最大金额
+          likeName: '',  //员工或者 部门编号
+          time: ''  // 时间
+        },
+        //筛选的过滤信息
+        screening: {
+          areaValue: "", //城市/区域
+          area: [] //城市/区域
+        },
+
+        //表格信息
+
+        picJson:[] //图片数组
+      };
+    },
+    created() {
+      this.fetchData(this.pageSize, this.currentPage);
+    },
+    mounted(){
+      this.initHeight()
+    },
+    methods: {
+      //初始化页面高度
+      initHeight(){
+        var height= document.documentElement.clientHeight || document.body.clientHeight
+        this.height = height -260;
+        this.$refs.table.style.height= (height -260)+'px';
+      },
+
+      /**
+       *  获取数据
+       * @param pageSize 分页每页显示数量
+       * @param pageNo    当天分页页码
+       * @param searchMsg  模糊搜索信息
+       */
+      fetchData(pageSize, pageNo) {
+        var _this = this
+        this.listResult = {}
+        /*this.loading = true*/
+        this.loading = true
+        var dataOption = {
+          gcid: '0100099',
+          userid: 'ab0f10cd02094f7b9b82b82088742557',
+          token: 'e40f0b86-2ed6-4b62-8571-e63e1f23bbd3',
+          pageNo: pageNo,
+          pageSize: pageSize,
+          minPrice: this.searchMsg.minPrice,
+          maxPrice: this.searchMsg.maxPrice,
+          likeName: this.searchMsg.likeName,
+          startDate: this.searchMsg.time[0],
+          endDate: this.searchMsg.time[1]
+        }
+        this.axios({
+          method: 'post',
+          url: this.$store.state.api.finance.getListNoPayFinance,
+          data: dataOption
+        }).then(function (response) {
+          _this.loading = false
+          _this.listResult = response.data.result;
+          _this.totalRecord = response.data.result.totalRecord;
+        })
+      },
+      handleAvatarSuccess(response, file, fileLis){
+        console.log(response)
+      },
+      /**
+       * 模糊搜索
+       */
+      search() {
+        this.fetchData(this.pageSize, this.currentPage)
+      },
+
+      /**
+       * 改变每页的分页数量
+       * @param val 每页分页的数量
+       */
+      handleSizeChange(val) {
+        this.pageSize = val
+        this.fetchData(val, this.currentPage)
+      },
+
+      /**
+       * 点击分页跳转或者输入分页跳转
+       * @param val  将要跳转到的分页
+       */
+      handleCurrentChange(val) {
+        this.currentPage = val
+        this.fetchData(this.pageSize, val)
+      },
+
+      /**
+       * @param item  当前操作行数
+       */
+      confirmMoney(item){
+        this.confirmMoneyBtn = true
+        this.currentItem = item
+      },
+      handlePictureCardPreview(){
+
+      },
+      handleRemove(){
+
+      },
+      // 上传成功回调
+      uploadSuccess(response, file, fileList){
+         console.log(response ,file ,fileList)
+         if(response.success == true){
+           var obj = {
+             smallImgrul:response.urlSmall,
+             bigImgurl:response.url
+           }
+           this.picJson.push(obj)
+         }
+      },
+      // 图片上传失败
+      uploadFail(){
+        this.$message.error('上传图片失败');
+      },
+      /**
+       * 确认打款
+       */
+      sureMoney(){
+         // 清空上次 上传的文件列表
+        var  financeDate = this.time
+        var  picJson = this.picJson
+
+         var _this= this
+         var {id, gcid}=this.currentItem;
+         var  financePrice =this.currentItem.financePrice
+         if(!financePrice){
+            this.$message.error('打款金额不得为空')
+            return
+         }
+         if (!financeDate) {
+            this.$message.error('打款时间必填')
+            return
+         }
+
+         this.axios({
+           method:"post",
+           url:this.$store.state.api.finance.affirmToPrice,
+           data:{
+             id,
+             gcid,
+             financePrice,
+             financeDate,
+             picJson,
+           }
+         }).then((response)=>{
+           _this.$refs.upload.clearFiles();
+           var  {data} = response
+           if (data.status.code == 200) {
+             _this.$message({
+               message: '操作成功',
+               type: 'success',
+               duration:1000
+             });
+             _this.confirmMoneyBtn = false
+             var pageSize = _this.pageSize
+             var pageNo = 1
+             _this.fetchData(pageSize, pageNo)
+           }
+         })
+      }
+    }
+  };
+</script>
+
+<style scoped>
+  /*确认打款弹框*/
+  /deep/ .confirmMoney .el-dialog__body {
+    padding: 0px;
+  }
+
+  /deep/ .confirmMoney .el-dialog__title {
+    color: #188ff0;
+    font-size: 16px;
+  }
+
+  .confirmMoney .confirmMoney_top {
+    padding: 25px 0 31px 25px;
+    border-bottom: 1px dashed #dfe4e6;;
+  }
+
+  .confirmMoney_top > span {
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  .confirmMoney_top span:nth-of-type(1) {
+    font-size: 14px;
+    color: #999999;
+  }
+
+  .confirmMoney_top span:nth-of-type(2) {
+    font-size: 20px;
+    color: #404040;
+  }
+
+  .confirmMoney .input_group {
+    margin: 30px 0 16px 25px;
+  }
+
+  .confirmMoney .input_group > div:nth-of-type(1) {
+    margin-right: 10px;
+  }
+
+  .confirmMoney .input_item {
+    position: relative;
+    line-height: 36px;
+    font-size: 14px;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  .confirmMoney .input_item label {
+    position: absolute;
+    left: 10px;
+    top: 2px;
+    color: #404040;
+  }
+
+  .input_item label:before {
+    content: '*';
+    position: absolute;
+    font-size: 16px;
+    color: #ff0000;
+    top: -8px;
+    left: -6px;
+  }
+
+  .confirmMoney .input_item input {
+    width: 245px;
+    height: 36px;
+    line-height: 36px;;
+    background-color: #ffffff;
+    border: solid 1px #e6eced;
+    text-indent: 63px;
+  }
+
+  .confirmMoney .notice {
+    margin-left: 37px;
+    position: relative;
+    font-size: 14px;
+  }
+
+  .confirmMoney .notice > span:nth-of-type(1) {
+    color: #404040;
+  }
+
+  .confirmMoney .notice > span:nth-of-type(2) {
+    color: #999999;
+    font-size: 12px;
+  }
+
+  .notice > span:nth-of-type(1)::before {
+    content: '*';
+    position: absolute;
+    font-size: 16px;
+    color: #ff0000;
+    top: -8px;
+    left: -6px
+  }
+
+  .confirmMoney .notice em {
+    font-style: normal;
+    color: #ff0000;
+    font-size: 12px;
+  }
+
+  .confirmMoney .upload {
+    margin: 15px 0 0px 25px;
+  }
+
+  .confirmMoney .upload_msg {
+    margin-left: 25px;
+  }
+
+  .confirmMoney .upload_msg > span {
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  .upload_msg > span:nth-of-type(1) {
+    padding: 0 22px 0 27px;
+    background: url("../../../static/image/weiIcon.jpg") no-repeat center left;
+  }
+
+  .upload_msg > span:nth-of-type(2) {
+    color: #188ff0;
+  }
+
+  .confirmMoney .sureBtn {
+    display: inline-block;
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    line-height: 40px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 16px;
+  }
+
+  /*弹框 end*/
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row.no-margin-bottom {
+    margin-bottom: 0px;
+  }
+
+  .el-row.search {
+    background: #fff;
+    padding: 20px;
+  }
+
+  .el-button--primary {
+    width: 100%;
+    background-color: #188ff0;
+    border-color: #188ff0;
+    border-radius: 0px;
+  }
+
+  /deep/ .el-input__inner {
+    border-radius: 0px;
+  }
+
+  /deep/ .el-button--primary span {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table tr {
+    background: #f7f7f7;
+  }
+
+  /deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+    background: #ffffff;
+  }
+
+  /deep/ .el-table th > .cell {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table thead tr {
+    background-color: #ffffff;
+    color: #2e3445;
+  }
+
+  /deep/ .el-pagination {
+    padding: 0px;
+    text-align: right;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li.active {
+    background-color: #188ff0;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li:hover {
+    color: #188ff0;
+  }
+
+  /deep/ .el-form-item {
+    margin: 0px;
+    border: 1px solid #dcdfe6;
+  }
+
+  /deep/ .el-form-item .el-input__inner {
+    border: 0px;
+  }
+
+  /deep/ .noMarginRight > .el-form-item__content {
+    width: 100%;
+  }
+
+  /deep/ .el-form--inline .el-form-item {
+    margin-right: 10px;
+  }
+
+  /deep/ .el-form--inline .el-form-item__label {
+    padding-left: 12px;
+    padding-right: 0px;
+  }
+
+  /deep/ .el-date-editor .el-range-input {
+    width: 90px;
+  }
+
+  /deep/ .el-date-editor .el-range-separator {
+    width: 30px;
+  }
+
+  .finance-state {
+    display: inline-block;
+    color: #fff;
+    width: 70px;
+    padding-right: 10px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+  }
+
+  .finance-state.yellow {
+    background: url(../../../static/image/icon_state_yellow.png) left top / 70px 30px no-repeat !important;
+  }
+
+  .finance-state.gray {
+    background: url(../../../static/image/icon_state_gray.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.black {
+    background: url(../../../static/image/icon_state_black.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.green {
+    background: url(../../../static/image/icon_state_green.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.blue {
+    background: url(../../../static/image/icon_state_blue.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.red {
+    background: url(../../../static/image/icon_state_red.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.orange {
+    background: url(../../../static/image/icon_state_orange.png) left top / 70px 30px no-repeat;
+  }
+
+  .repayment-state {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    margin-right: 10px;
+  }
+
+  .repayment-state.red {
+    background: #f32240;
+    color: #fff;
+  }
+
+  .repayment-state.yellow {
+    background: #f3af2a;
+    color: #fff;
+  }
+
+  .repayment-state.green {
+    background: #1dbd6d;
+    color: #fff;
+  }
+  /deep/ .search .el-date-editor {
+    margin-left: 20px;
+  }
+
+  .searchPagination{
+    position: fixed;
+    bottom: 20px;
+    width: 89%;
+    background:#f9f9f9 ;
+    padding: 10px 20px 10px 10px;
+    box-sizing: border-box;
+    border: 1px solid #e5e5e5;
+  }
+  .tableDate {
+    background: #fff;
+  }
+
+  .el-upload--picture-card {
+    background-color: #fbfdff;
+    border: 1px dashed #c0ccda;
+    border-radius: 6px;
+    box-sizing: border-box;
+    width: 148px;
+    height: 148px;
+    cursor: pointer;
+    line-height: 146px;
+    vertical-align: top;}
+</style>

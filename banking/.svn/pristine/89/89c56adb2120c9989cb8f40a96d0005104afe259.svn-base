@@ -1,0 +1,30 @@
+//服务器地址
+const server_address = 'http://192.168.100.11:52001'
+
+//服务器api地址
+const api = {
+
+    //接口地址
+    setting: {  //系统设置
+        login: '/v2/jjr_user_login/pc_login'  //登录
+    }
+
+}
+const autoAddServerAddress = function (obj) {
+
+    const result = Object.create(null)
+
+    for (let key in obj) {
+
+        if (typeof obj[key] == 'object') {
+            result[key] = autoAddServerAddress(obj[key])
+        } else {
+            result[key] = server_address + obj[key]
+        }
+
+    }
+    return result
+
+}
+
+export default autoAddServerAddress(api)

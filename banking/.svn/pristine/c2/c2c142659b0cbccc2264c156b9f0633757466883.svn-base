@@ -1,0 +1,304 @@
+<template>
+	<el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.user" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.user" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="formInline.region" placeholder="合同时间" style="width:100px;">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+            <el-date-picker
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.user" placeholder="合同编号 / 借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe>
+          <el-table-column 
+            prop="a1"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state" :class="scope.row.a1_date_pruce">{{ scope.row.a1_name }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a2"
+            label="应收时间 / 合同编码">
+            <template slot-scope="scope">
+                <p>
+                  <span v-if="scope.row.a2_date" class="repayment-state" :class="scope.row.a2_date_color">{{ scope.row.a2_date }}</span>
+                  {{ scope.row.a2_name }}
+                </p>
+                <p style="color:#188ff0;">{{ scope.row.a2_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a3"
+            label="应收金额(本金 / 利息 / 滞纳金)">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a3_name }}</p>
+                <p>{{ scope.row.a3_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a4"
+            label="期数 / 总期数 / 借款人 /联系方式">
+            <template slot-scope="scope">
+                <p style="color:#188ff0;">{{ scope.row.a4_name }}</p>
+                <p>{{ scope.row.a4_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            prop="handle"
+            label="操作"
+            width="130">
+            <template slot-scope="scope">
+              <el-select v-model="screening.areaValue" placeholder="查看合同" style="width:100%;">
+                <el-option
+                  v-for="item of screening.area"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="table.currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+	</el-main>
+</template>
+
+<script>
+export default {
+  name: "ShouldCollect",
+  data() {
+    return {
+      loading: false,
+
+      formInline: {
+        user: "",
+        region: ""
+      },
+
+      //筛选的过滤信息
+      screening: {
+        areaValue: "", //城市/区域
+        area: [] //城市/区域
+      },
+
+      //表格信息
+      table: {
+        thead: [],
+        tbody: [
+          {
+            a1_name: "待确认",
+            a1_date_pruce: "yellow",
+            a2_date: "逾3天",
+            a2_date_color: "red",
+            a2_name: "2017-12-12",
+            a2_date_pruce: "XY20171129001",
+            a3_name: "52000元(共减免滞纳金100)",
+            a3_date_pruce: "50000 / 1800 /200",
+            a4_name: "5 / 12",
+            a4_date_pruce: "世纪源公寓公司 18486748483"
+          },
+          {
+            a1_name: "待收款",
+            a1_date_pruce: "blue",
+            a2_date: "已到期",
+            a2_date_color: "yellow",
+            a2_name: "2017-12-12",
+            a2_date_pruce: "XY20171129001",
+            a3_name: "52000元",
+            a3_date_pruce: "50000 / 1800 /200",
+            a4_name: "5 / 12",
+            a4_date_pruce: "世纪源公寓公司 18486748483"
+          },
+          {
+            a1_name: "待收款",
+            a1_date_pruce: "blue",
+            a2_date: "5天后",
+            a2_date_color: "green",
+            a2_name: "2017-12-12",
+            a2_date_pruce: "XY20171129001",
+            a3_name: "52000元",
+            a3_date_pruce: "50000 / 1800 /200",
+            a4_name: "5 / 12",
+            a4_date_pruce: "世纪源公寓公司 18486748483"
+          },
+          {
+            a1_name: "待收款",
+            a1_date_pruce: "blue",
+            a2_name: "2017-12-12",
+            a2_date_pruce: "XY20171129001",
+            a3_name: "52000元",
+            a3_date_pruce: "50000 / 1800 /200",
+            a4_name: "5 / 12",
+            a4_date_pruce: "世纪源公寓公司 18486748483"
+          }
+        ],
+        tfoot: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+}
+.finance-state.yellow {
+  background: url(../../../static/image/icon_state_yellow.png) left top / 70px
+    30px no-repeat !important;
+}
+.finance-state.gray {
+  background: url(../../../static/image/icon_state_gray.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.black {
+  background: url(../../../static/image/icon_state_black.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.green {
+  background: url(../../../static/image/icon_state_green.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.blue {
+  background: url(../../../static/image/icon_state_blue.png) left top / 70px
+    30px no-repeat;
+}
+.finance-state.red {
+  background: url(../../../static/image/icon_state_red.png) left top / 70px 30px
+    no-repeat;
+}
+.finance-state.orange {
+  background: url(../../../static/image/icon_state_orange.png) left top / 70px
+    30px no-repeat;
+}
+
+.repayment-state {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 3px;
+  margin-right: 10px;
+}
+.repayment-state.red {
+  background: #f32240;
+  color: #fff;
+}
+.repayment-state.yellow {
+  background: #f3af2a;
+  color: #fff;
+}
+.repayment-state.green {
+  background: #1dbd6d;
+  color: #fff;
+}
+</style>

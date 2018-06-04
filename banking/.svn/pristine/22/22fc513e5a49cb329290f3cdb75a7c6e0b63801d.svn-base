@@ -1,0 +1,1328 @@
+<template>
+	<el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.user" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.user" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="formInline.region" placeholder="用款时间" style="width:100px;">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+            <el-date-picker
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.user" placeholder="借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe>
+          <el-table-column 
+            prop="a1"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state">待审核</span>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a2"
+            label="借款人/金额/用款时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a2_name }}</p>
+                <p>{{ scope.row.a2_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a3"
+            label="房源信息">
+          </el-table-column>
+          <el-table-column 
+            prop="a4"
+            label="类别/还款方式/申请时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a4_name }}</p>
+                <p>{{ scope.row.a4_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            prop="handle"
+            label="操作"
+            width="130">
+            <template slot-scope="scope">
+              <el-select v-model="screening.areaValue" @change="handle" placeholder="审批" style="width:100%;">
+                <el-option label="审批" value="0"></el-option>
+                <el-option label="查看" value="1"></el-option>
+                <el-option label="生成合同" value="2"></el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="table.currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      title="查看详情"
+      :visible="activeDetail"
+      width="50%"
+      :before-close="detailClose">
+      <h1 class="title">申请信息</h1>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">贷款种类</span>
+          <span class="detail-item">寓租贷</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">用款时间</span>
+          <span class="detail-item">2017-12-26</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">还款方式</span>
+          <span class="detail-item">每月等额</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">用款额度</span>
+          <span class="detail-item">50000</span>
+        </el-col>
+        <el-col :span="16">
+          <span class="detail-title">用款明细</span>
+          <span class="detail-item">明细内容明细内容明细内容明细内容明细内容明细内容</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">公寓性质</span>
+          <span class="detail-item">企业／个人</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">公寓品牌</span>
+          <span class="detail-item">蛋壳公寓</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">联系人姓名</span>
+          <span class="detail-item">李阳</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">联系人电话</span>
+          <span class="detail-item">18574733631</span>
+        </el-col>
+        <el-col :span="16">
+          <span class="detail-title">公司地址</span>
+          <span class="detail-item">北京市海淀区安宁庄前街9号金鱼嘉华大厦</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <span class="detail-title">申请说明</span>
+          <span class="detail-item">说明说明</span>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <h1 class="title">借款项目</h1>
+      <el-row>
+        <el-col :span="24">
+          <span class="detail-title">房源地址</span>
+          <span class="detail-item">北京西路1231弄新里·22栋11单元123室</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">户型</span>
+          <span class="detail-item">2室1厅</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">面积</span>
+          <span class="detail-item">80㎡</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">装修</span>
+          <span class="detail-item">精装</span>
+        </el-col>
+      </el-row>
+      <h1 class="title no-mark">业主信息</h1>
+      <el-row>
+        <el-col :span="4">
+          <span class="detail-title">业主附件</span>
+        </el-col>
+        <el-col :span="5">
+          <img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg" class="detail-img" />
+          <p class="detail-item" style="text-align:center;">身份证正面</p>
+        </el-col>
+        <el-col :span="5">
+          <img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg" class="detail-img" />
+          <p class="detail-item" style="text-align:center;">身份证反面</p>
+        </el-col>
+        <el-col :span="5">
+          <img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg" class="detail-img" />
+          <p class="detail-item" style="text-align:center;">合同附件</p>
+        </el-col>
+        <el-col :span="5">
+          <img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg" class="detail-img" />
+          <p class="detail-item" style="text-align:center;">房产证明</p>
+        </el-col>
+      </el-row>
+      <h1 class="title">收款人信息</h1>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">姓名</span>
+          <span class="detail-item">高雨婷</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">手机</span>
+          <span class="detail-item">18374746363</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">身份证</span>
+          <span class="detail-item">283847474737373327</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">开户行</span>
+          <span class="detail-item">建设银行</span>
+        </el-col>
+        <el-col :span="16">
+          <span class="detail-title">银行账号</span>
+          <span class="detail-item">3488437487585439</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">
+          <span class="detail-title">业主附件</span>
+        </el-col>
+        <el-col :span="5">
+          <img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=547138142,3998729701&fm=27&gp=0.jpg" class="detail-img" />
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <h1 class="title">审批意见</h1>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">审批人</span>
+          <span class="detail-item">高雨婷</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">审批时间</span>
+          <span class="detail-item">2017-12-26 12:12:21</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">审批状态</span>
+          <span class="detail-item red">已驳回</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <span class="detail-title">审批备注</span>
+          <span class="detail-item">业主附件不清晰，请从新上传</span>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <h1 class="title">生成合同</h1>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">操作人</span>
+          <span class="detail-item">高雨婷</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">生成时间</span>
+          <span class="detail-item">2017-12-26 12:12:21</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">合同编码</span>
+          <span class="detail-item">XY20171129001</span>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="danger" style="background-color:#f2082e !important;border-color:#f2082e !important;" @click="activeReject=true">驳回</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=true">通过</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="驳回审核"
+      width="30%"
+      :visible="activeReject"
+      :before-close="rejectClose">
+      <p class="error-message">确定要驳回该项贷款审批吗？</p>
+      <el-input type="textarea" placeholder="输入原因（选填）"></el-input>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeReject=false">确认</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="通过审核"
+      width="30%"
+      :visible="activeAdopt"
+      :before-close="adoptClose">
+      <p class="error-success">确定要通过该项贷款审批吗？</p>
+      <el-input type="textarea" placeholder="输入原因（选填）"></el-input>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=false">确认</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="activeContract1"
+      :before-close="contractClose1">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同类型  寓租贷"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同模板  单项借款协议"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active1"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">生成合同</h1>
+        </el-col>
+        <el-col :span="8">
+          <el-select value="" placeholder="选择甲方" style="width:100%;">
+            <el-option label="区域一" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="12" style="padding-top:10px;">
+          <span style="font-size:14px;color:#999999;line-height:20px;margin-left:15px;">可在"设置 - 字典"中设置，方便以后选择</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="借款人:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="住所地:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="法定代表:"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="电话:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">乙方信息</h1>
+        </el-col>
+        <el-col :span="8">
+          <el-select value="" placeholder="选择乙方" style="width:100%;">
+            <el-option label="区域一" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="12" style="padding-top:10px;">
+          <span style="font-size:14px;color:#999999;line-height:20px;margin-left:15px;">可在"设置 - 字典"中设置，方便以后选择</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="贷款人:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="住所地:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="法定代表:"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="电话:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">内容信息</h1>
+        </el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="合同签订时间：  2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="合同编码："></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="借款金额（大写）：伍万贰仟元整"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="15" style="padding-right:5px;">
+          <el-input disabled="disabled" value="借款期限：     2017-12-12           —     2018-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="1年"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-select value="" placeholder="每月还本付息日：        5 日" style="width:100%;">
+            <el-option label="区域一" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="借款年华利率：           9             ％"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="每月等额还贷本息金额：                          5000                      元"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">乙方收款账户</h1>
+        </el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="收款人：  高雨婷"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="开户行：   上地建设银行"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="银行账号：  27378439848558757374"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="activeAdopt=false">预览</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=false">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="activeContract2"
+      :before-close="contractClose2">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同类型  寓租贷"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同模板  单项借款协议"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active2"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">申请公司</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="公司名称:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">申请信息</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="申请类型：寓租贷"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="申请总金额：52000"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="付款时间：2017-12-12"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="借款用户：支付房租"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">收款账户</h1>
+        </el-col>
+        <el-col :span="20">
+          <table border="1" class="receivables-table">
+            <tr>
+              <td>房源地址</td>
+              <td colspan="3" class="receivables-table-gray">北京市海淀区西二旗智学苑 3号楼5单元601室</td>
+            </tr>
+            <tr>
+              <td>用款金额</td>
+              <td class="receivables-table-gray">19384847583</td>
+              <td>收款人姓名</td>
+              <td class="receivables-table-gray">高雨婷</td>
+            </tr>
+            <tr>
+              <td>收款人电话</td>
+              <td class="receivables-table-gray">19384847583</td>
+              <td>开户行</td>
+              <td class="receivables-table-gray">上地建设银行</td>
+            </tr>
+            <tr>
+              <td>银行账号</td>
+              <td colspan="3" class="receivables-table-gray">23298439845746573848</td>
+            </tr>
+          </table>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="activeAdopt=false">预览</el-button>
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="activeAdopt=false">上一页</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=false">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="activeContract3"
+      :before-close="contractClose3">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同类型  寓租贷"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同模板  单项借款协议"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active3"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">甲方信息</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="公司名称:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">其他信息</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="公司名称:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="15" style="padding-right:5px;">
+          <el-input disabled="disabled" value="用款房源：  北京市海淀区西二旗智学苑 3号楼5单元601室"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="1年"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="款项用途：  支付房租"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="放款金额：  50000"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="借款利率（年华）：       9         ％"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="还款方式：  每月等额"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="借款期限：       2017-12-12                 —             2018-12-12"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">还款计划</h1>
+        </el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding:0px 5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding:0px 5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="activeAdopt=false">预览</el-button>
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="activeAdopt=false">上一页</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=false">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="activeContract4"
+      :before-close="contractClose4">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同类型  寓租贷"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" value="合同模板  单项借款协议"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active4"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">委托人</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="公司名称:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">受托人</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="公司名称:"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">借款信息</h1>
+        </el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" value="借款日期：  2017-12-12  "></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="借款金额：  50000                    元"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="15" style="padding-right:5px;">
+          <el-input disabled="disabled" value="借款期限：   2017-12-12           —         2018-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="12  个月"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="借款用途： "></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" value="支付方式：   网银转账 "></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">收款账户</h1>
+        </el-col>
+        <el-col :span="20">
+          <table border="1" class="receivables-table">
+            <tr>
+              <td>房源地址</td>
+              <td colspan="3" class="receivables-table-gray">北京市海淀区西二旗智学苑 3号楼5单元601室</td>
+            </tr>
+            <tr>
+              <td>用款金额</td>
+              <td class="receivables-table-gray">19384847583</td>
+              <td>收款人姓名</td>
+              <td class="receivables-table-gray">高雨婷</td>
+            </tr>
+            <tr>
+              <td>收款人电话</td>
+              <td class="receivables-table-gray">19384847583</td>
+              <td>开户行</td>
+              <td class="receivables-table-gray">上地建设银行</td>
+            </tr>
+            <tr>
+              <td>银行账号</td>
+              <td colspan="3" class="receivables-table-gray">23298439845746573848</td>
+            </tr>
+          </table>
+        </el-col>
+      </el-row>
+    </el-dialog>
+	</el-main>
+</template>
+
+<script>
+import contract1 from "@/components/examinaApproval/createContract/Contract1";
+export default {
+  name: "WaitExaminaApproval",
+  data() {
+    return {
+      loading: false, //整页的loading
+
+      activeDetail: false, //查看详情页的dialog
+      activeReject: false, //驳回的dialog
+      activeAdopt: false, //通过的dialog
+      activeContract1: false, //生成合同1
+      activeContract2: false, //生成合同2
+      activeContract3: false, //生成合同3
+      activeContract4: false, //生成合同4
+
+      formInline: {
+        user: "",
+        region: ""
+      },
+
+      //筛选的过滤信息
+      screening: {
+        areaValue: "", //城市/区域
+        area: [] //城市/区域
+      },
+
+      //表格信息
+      table: {
+        thead: [],
+        tbody: [
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          }
+        ],
+        tfoot: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  },
+  methods: {
+    handle() {
+      var areaValue = this.screening.areaValue;
+      if (areaValue == 1) {
+        this.activeDetail = true;
+      } else if (areaValue == 2) {
+        this.activeContract4 = true;
+      }
+    },
+    detailClose() {
+      this.activeDetail = false;
+      this.screening.areaValue = "审批";
+    },
+    rejectClose() {
+      this.activeReject = false;
+    },
+    adoptClose() {
+      this.activeAdopt = false;
+    },
+    contractClose1() {
+      this.activeContract1 = false;
+      this.screening.areaValue = "审批";
+    },
+    contractClose2() {
+      this.activeContract2 = false;
+      this.screening.areaValue = "审批";
+    },
+    asd() {
+      alert(12346);
+    }
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+.el-button--primary.is-plain {
+  background-color: #fff;
+  border-color: #188ff0;
+  border-width: 1px;
+  color: #188ff0;
+}
+/deep/ .el-textarea__inner {
+  padding: 10px 15px;
+  min-height: 100px !important;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .el-input.is-disabled .el-input__inner {
+  background-color: #f0eeee;
+  border-color: #e6eced;
+  color: #404040;
+}
+.el-input.is-disabled {
+  position: relative;
+}
+.el-input.is-disabled::before {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  content: "＊";
+  color: #f2082e;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_blue.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+.title {
+  color: #188ff0;
+  padding-left: 20px;
+  position: relative;
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  font-weight: normal;
+  font-size: 14px;
+}
+.title::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 18px;
+  background-color: #188ff0;
+  position: absolute;
+  top: 1px;
+  left: 0px;
+}
+.title.no-mark {
+  padding-left: 0px;
+}
+.title.no-mark::before {
+  content: none;
+}
+.detail-title {
+  font-size: 14px;
+  color: #000;
+  margin-right: 20px;
+}
+.detail-item {
+  font-size: 12px;
+  color: #777;
+}
+.detail-item.red {
+  color: #f2082e;
+}
+.division {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dfe4e6;
+  margin: 0px;
+  margin-bottom: 20px;
+}
+.detail-img {
+  display: block;
+  border: 0px;
+  width: 85%;
+  height: 85%;
+  margin: 0 auto;
+}
+.error-message {
+  font-size: 14px;
+  color: #f2082e;
+  margin-bottom: 10px;
+}
+.error-success {
+  font-size: 14px;
+  color: #188ff0;
+  margin-bottom: 10px;
+}
+.progress-bg-gray {
+  width: 100%;
+  height: 10px;
+  background: #ebf0f2;
+  border-radius: 5px;
+  position: relative;
+}
+.progress-bg-active {
+  width: 0%;
+  height: 10px;
+  background: #188ff0;
+  border-radius: 5px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+.progress-bg-active.progress-bg-active1 {
+  width: 25%;
+}
+.progress-bg-active.progress-bg-active2 {
+  width: 50%;
+}
+.progress-bg-active.progress-bg-active3 {
+  width: 75%;
+}
+.progress-bg-active.progress-bg-active4 {
+  width: 100%;
+}
+.progress-tips-con {
+  width: 100%;
+  position: absolute;
+  left: 0px;
+  top: -40px;
+  margin: 0px;
+}
+.progress-tips-item {
+  position: relative;
+}
+.progress-tips-item::after {
+  position: absolute;
+  content: "";
+  left: 50%;
+  margin-left: -15px;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  background: #ebf0f2;
+  color: #666;
+  font-size: 14px;
+}
+.progress-tips-con .progress-tips-item:nth-of-type(1)::after {
+  content: "1";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(2)::after {
+  content: "2";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(3)::after {
+  content: "3";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(4)::after {
+  content: "4";
+}
+.progress-tips-item.active::after {
+  background: #188ff0;
+  color: #fff;
+}
+.progress-tips-item .progress-tips-item-text {
+  color: #999999;
+  text-align: center;
+  font-size: 14px;
+  padding-bottom: 7px;
+}
+.progress-tips-item.active .progress-tips-item-text {
+  color: #188ff0;
+}
+.margin-bottom10 {
+  margin-bottom: 10px;
+}
+.receivables-table {
+  width: 100%;
+  border-color: #e6eced;
+  border-style: solid;
+  border-collapse: collapse;
+}
+.receivables-table td {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: #000;
+}
+.receivables-table td.receivables-table-gray {
+  color: #777;
+}
+.receivables-table tr:nth-of-type(even) {
+  background: #f2f6f7;
+}
+</style>

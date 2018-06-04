@@ -1,0 +1,399 @@
+<template>
+	<el-container>
+		
+    <!-- 头部 - 二级路由 -->
+    <el-header class="bg-white">
+      <cms-header :tabs="tabs"></cms-header>
+    </el-header>
+    
+		<!-- 主体 - 内容 -->
+		<el-main>
+      <el-row :gutter="20">
+
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div class="box-card-title">昨日订单总数</div>
+            <div class="box-card-number">200</div>
+            <div class="box-card-icon icon-order"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div class="box-card-title">昨日销售总额</div>
+            <div class="box-card-number">¥21552.78</div>
+            <div class="box-card-icon icon-sale"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div class="box-card-title">昨日新增用户</div>
+            <div class="box-card-number">311</div>
+            <div class="box-card-icon icon-user-tatol"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div class="box-card-title">用户总数</div>
+            <div class="box-card-number">45132</div>
+            <div class="box-card-icon icon-user-add"></div>
+          </el-card>
+
+        </el-col>
+ 
+      </el-row>
+      <el-row :gutter="20">
+
+        <el-col :span="6">
+
+          <el-card class="box-card bg-red">
+            <div class="box-card-title">昨日新增房源</div>
+            <div class="box-card-number">436</div>
+            <div class="box-card-icon icon-house-add"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-red">
+            <div class="box-card-title">房间数总数</div>
+            <div class="box-card-number">128726</div>
+            <div class="box-card-icon icon-house-total"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-green">
+            <div class="box-card-title">已上架房源总数</div>
+            <div class="box-card-number">237</div>
+            <div class="box-card-icon icon-up-house-total"></div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-green">
+            <div class="box-card-title">已下架房源总数</div>
+            <div class="box-card-number">92</div>
+            <div class="box-card-icon icon-bottom-house-total"></div>
+          </el-card>
+
+        </el-col>
+ 
+      </el-row>
+      <el-row :gutter="20">
+
+        <el-col :span="12">
+
+          <el-card class="box-card bg-white">
+            <h1 class="box-card-h1">待处理事务</h1>
+            <el-row>
+              <el-col :span="12" class="box-card-affair">
+                <img src="static/image/home-affair-01.png" class="box-card-affair-img" />
+                <div class="box-card-affair-msgc">
+                  <span class="affair-number">324</span>
+                  <span class="affair-state">待审核房源</span> 
+                </div>
+              </el-col>
+              <el-col :span="12" class="box-card-affair">
+                <img src="static/image/home-affair-02.png" class="box-card-affair-img" />
+                <div class="box-card-affair-msgc">
+                  <span class="affair-number">15</span>
+                  <span class="affair-state">待审核房行</span> 
+                </div>
+              </el-col>
+            </el-row>  
+          </el-card>
+
+        </el-col>
+        <el-col :span="12">
+
+          <el-card class="box-card bg-white">
+            <h1 class="box-card-h1">快捷入口</h1>
+            <el-row>
+              <el-col :span="6" class="box-card-entry">
+                <img src="static/image/home-entry-01.png" class="box-card-entry-img" style="width:40px;" />
+                <span class="entry-state">订单管理</span>
+              </el-col>
+              <el-col :span="6" class="box-card-entry">
+                <img src="static/image/home-entry-02.png" class="box-card-entry-img" />
+                <span class="entry-state">订单管理</span>
+              </el-col>
+              <el-col :span="6" class="box-card-entry">
+                <img src="static/image/home-entry-03.png" class="box-card-entry-img" />
+                <span class="entry-state">订单管理</span>
+              </el-col>
+              <el-col :span="6" class="box-card-entry">
+                <img src="static/image/home-entry-04.png" class="box-card-entry-img" />
+                <span class="entry-state">订单管理</span>
+              </el-col>
+            </el-row>  
+          </el-card>
+          
+        </el-col>
+
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+
+          <el-card class="box-card bg-white">
+            <h1 class="box-card-h1">房源统计</h1>
+            <div class="box-card-chart">
+              <el-row :gutter="30">
+                <el-col :span="4" class="bordeRight">
+                  <div class="chart-left">
+                    <div class="chart-left-title">本月新增房源总数</div>
+                    <div class="chart-left-state">4361</div>
+                    <div>
+                      <span class="chart-left-proportion up">10%</span>
+                      <span class="chart-left-proportion-name">环比上月</span>
+                    </div>
+                  </div>
+                  <div class="chart-left">
+                    <div class="chart-left-title">本周新增房源总数</div>
+                    <div class="chart-left-state">547</div>
+                    <div>
+                      <span class="chart-left-proportion down">8%</span>
+                      <span class="chart-left-proportion-name">环比上周</span> 
+                    </div>
+                  </div>
+                </el-col>
+                <el-col :span="20">
+                  <div class="chart-right">
+                    <div class="chart-right-title">近一周房源统计</div>
+                    <div class="chart-container">
+                      <img src="static/image/chart.png" style="width:100%;height:280px;" />
+                    </div>
+                  </div>
+                </el-col>
+              </el-row>
+            </div>
+          </el-card>
+
+        </el-col>
+      </el-row>
+    </el-main>
+
+	</el-container>
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+
+export default {
+  name: "home",
+  data() {
+    return {
+      info: "home",
+      tabs: [{ name: "工作台", path: "/home" }]
+    };
+  },
+  components: {
+    cmsHeader
+  }
+};
+</script>
+<style scoped>
+.el-main{
+  background: #ecf0f4;
+}
+
+.header {
+  background: #fff;
+}
+
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row:last-child {
+  margin-bottom: 0px;
+}
+
+.box-card {
+  border-radius: 5px;
+  position: relative;
+}
+.box-card .box-card-title {
+  color: #f2f3f5;
+  font-size: 14px;
+  padding-top: 10px;
+}
+.box-card .box-card-number {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+  padding-top: 10px;
+}
+.box-card .box-card-icon {
+  position: absolute;
+  width: 40px;
+  height: 50px;
+  right: 15px;
+  bottom: 10px;
+}
+.box-card .box-card-icon.icon-order {
+  width: 35px;
+  height: 45px;
+  background: url(../../static/image/home01.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-sale {
+  background: url(../../static/image/home02.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-user-tatol {
+  width: 40px;
+  height: 45px;
+  background: url(../../static/image/home03.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-user-add {
+  width: 50px;
+  height: 50px;
+  background: url(../../static/image/home04.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-house-add {
+  background: url(../../static/image/home05.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-house-total {
+  background: url(../../static/image/home06.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-up-house-total {
+  background: url(../../static/image/home07.png) center/contain no-repeat;
+}
+.box-card .box-card-icon.icon-bottom-house-total {
+  background: url(../../static/image/home08.png) center/contain no-repeat;
+}
+
+.box-card .box-card-h1 {
+  margin-left: -20px;
+  border-left: 3px solid #242937;
+  padding-left: 20px;
+  color: #242937;
+  font-size: 14px;
+  font-weight: normal;
+  text-align: left;
+}
+
+.box-card .box-card-height-fixed {
+  height: 50px;
+}
+
+.box-card .box-card-affair {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  height: 120px;
+}
+
+.box-card-affair .box-card-affair-img {
+  width: 50px;
+}
+.box-card-affair .box-card-affair-msgc {
+  margin-left: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 50px;
+}
+.box-card-affair .box-card-affair-msgc .affair-number {
+  flex: 1;
+  order: 0;
+  color: #2e3445;
+  font-weight: bold;
+  font-size: 20px;
+}
+.box-card-affair .box-card-affair-msgc .affair-state {
+  order: 1;
+  color: #2e3445;
+  font-size: 14px;
+}
+
+.box-card .box-card-entry {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 120px;
+}
+.box-card-entry .box-card-entry-img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+.box-card-entry .entry-state {
+  color: #2e3445;
+  font-size: 14px;
+}
+
+.box-card .box-card-chart {
+  padding-top: 20px;
+}
+.box-card-chart .bordeRight {
+  border-right: 1px solid #edeef0;
+}
+.box-card-chart .chart-left {
+  height: 150px;
+}
+.box-card-chart .chart-left .chart-left-title {
+  color: #9d9fa3;
+  font-size: 14px;
+}
+.box-card-chart .chart-left .chart-left-state {
+  color: #2e3445;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 7px 0px;
+}
+.box-card-chart .chart-left .chart-left-proportion {
+  font-size: 12px;
+}
+.box-card-chart .chart-left .chart-left-proportion.up {
+  color: #44b271;
+}
+.box-card-chart .chart-left .chart-left-proportion.down {
+  color: #fa0421;
+}
+.box-card-chart .chart-left .chart-left-proportion-name {
+  font-size: 12px;
+  color: #999999;
+  margin-left: 20px;
+}
+
+.box-card-chart .chart-right {
+  height: 300px;
+}
+.box-card-chart .chart-right .chart-right-title {
+  font-size: 14px;
+  color: #242937;
+  height: 20px;
+  line-height: 20px;
+}
+.box-card-chart .chart-right .chart-container {
+  width: 100%;
+  height: 280px;
+}
+
+.bg-white {
+  background: #ffffff;
+}
+.bg-grey {
+  background: #f2f3f5;
+}
+.bg-bule {
+  background: #55aae6;
+}
+.bg-orange {
+  background: #f48d5f;
+}
+.bg-red {
+  background: #ef7477;
+}
+.bg-green {
+  background: #4ac780;
+}
+</style>

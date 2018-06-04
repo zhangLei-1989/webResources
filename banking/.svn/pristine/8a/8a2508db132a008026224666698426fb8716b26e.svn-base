@@ -1,0 +1,19 @@
+import Vue from "vue"
+import Vuex from "vuex"
+
+Vue.use(Vuex)
+
+//服务器api接口地址
+import api from "./serverApi.js"
+
+//设置-部门管理
+import apartmentRole from "./setting/apartmentRole.js"
+
+const store = new Vuex.Store({
+    state: { api },
+    modules: {
+        apartmentRole
+    }
+});
+
+export default store;

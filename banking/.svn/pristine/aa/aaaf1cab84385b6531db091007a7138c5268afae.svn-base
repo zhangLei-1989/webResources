@@ -1,0 +1,121 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import Index from "@/components/Index"
+
+// 登录
+import Login from '@/components/Login'
+
+// 工作台
+import Home from '@/components/Home'
+
+// 审批
+import ExaminaApproval from '@/components/ExaminaApproval'
+import WaitExaminaApproval from '@/components/examinaApproval/WaitExaminaApproval'
+
+// 合同
+import Contract from '@/components/Contract'
+import ContractList from '@/components/contract/ContractList'
+
+// 财务
+import Finance from '@/components/Finance'
+import ShouldCollect from '@/components/finance/shouldCollect'
+
+// 合作
+import Cooperation from '@/components/cooperation'
+import Partners from '@/components/cooperation/partners'
+
+// 设置
+import Setting from '@/components/Setting'
+import ApartmentRole from '@/components/setting/ApartmentRole'
+
+Vue.use(Router)
+
+export default new Router({
+  mode: "history",
+  routes: [
+    {   // 初始化页面
+      path: '/',
+      name: 'Index',
+      component: Index,
+      children: [
+        {  // 工作台
+          path: '/home',
+          name: 'Home',
+          component: Home
+        },
+        {  // 审批
+          path: '/examinaApproval',
+          name: 'ExaminaApproval',
+          component: ExaminaApproval,
+          children: [
+            {
+              path: ":twoLevel",
+              name: "waitExaminaApproval",
+              component: WaitExaminaApproval
+            }
+          ]
+        },
+        {  // 合同
+          path: "/contract",
+          name: "Contract",
+          component: Contract,
+          children: [
+            {
+              path: ":twoLevel",
+              name: "contractList",
+              component: ContractList
+            }
+          ]
+        },
+        {  // 财务
+          path: "/finance",
+          name: "Finance",
+          component: Finance,
+          children: [
+            {
+              path: ":twoLevel",
+              name: "shouldCollect",
+              component: ShouldCollect
+            }
+          ]
+        },
+        {  // 合作
+          path: "/cooperation",
+          name: "Cooperation",
+          component: Cooperation,
+          children: [
+            {
+              path: ":twoLevel",
+              name: "partners",
+              component: Partners
+            }
+          ]
+        },
+        {  // 设置
+          path: "/setting",
+          name: "Setting",
+          component: Setting,
+          props(route) {
+            console.log(route)
+          },
+          children: [
+            {
+              path: ":twoLevel",
+              name: "header",
+              component: ApartmentRole
+            }
+          ]
+        }
+      ]
+    },
+    {   // 登录
+      path: "/login",
+      name: "Login",
+      component: Login
+    },
+    {
+      path: "*",
+      redirect: "home"
+    }
+  ]
+})

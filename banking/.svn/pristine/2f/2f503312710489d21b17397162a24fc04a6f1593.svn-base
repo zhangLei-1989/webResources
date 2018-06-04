@@ -1,0 +1,109 @@
+<template>
+	<div class="roleManger">
+    <div class="roleManger_top">
+      <el-row>
+        <el-col :span="22" style="padding-right: 0; padding-left:10px; ">
+          <el-input placeholder="请输入内容" id="header_input"></el-input>
+        </el-col>
+        <el-col :span="2" style="padding: 0">
+          <span  class="searchBtn">搜索</span>
+        </el-col>
+      </el-row>
+    </div>
+		<div class="tableBox">
+      <table-list :tableOption="tableOption" class="roleTable"></table-list>
+    </div>
+	</div>
+</template>
+
+<script>
+import tableList from "@/components/public/TableList";
+export default {
+  name: "RoleManger",
+  data() {
+    return {
+      tableOption: {
+        thead: [
+          {
+            prop: "type",
+            label: "公告类型",
+            minWidth:180
+          },
+          {
+            prop: "createTime",
+            label: "创建时间",
+            minWidth:170
+          },
+          {
+            prop: "updateTime",
+            label: "修改时间",
+            minWidth:170
+          },
+          {
+            prop: "describe",
+            label: "描述",
+            minWidth:260
+          }
+        ],
+        data: [
+          {
+            type: "财务经理",
+            createTime: "2017.1.12  15:11",
+            updateTime: "2017.2.13  18:34",
+            describe: "描述描述"
+          }
+        ],
+        controButton: [
+          {
+            name: "修改权限",
+            event: "@click"
+          },
+          {
+            name: "编辑",
+            event: "@click"
+          },
+          {
+            name: "删除",
+            event: "@click"
+          }
+        ]
+      }
+    };
+  },
+  mounted() {},
+  components: {
+    tableList
+  }
+};
+</script>
+
+<style scoped>
+  /deep/.roleTable th,
+  /deep/.roleTable td{
+    text-align: center;
+  }
+  /deep/.roleManger_top {
+    margin-bottom: 20px;
+    height: 96px;
+    background: #fff;
+  }
+  /deep/ .roleManger_top .el-row{
+     padding-top: 26px;
+  }
+  .roleManger_top .searchBtn{
+    width: 100px;
+    display:inline-block;
+    vertical-align: bottom;
+    width: 84px;
+    text-align: center;
+    line-height: 40px;
+    height: 40px;
+    background: #188ff0;
+    color: #fff;
+  }
+  .tableBox{
+    overflow: auto;
+    min-height: calc(100vh - 210px);
+    border: 20px solid #fff;
+  }
+</style>

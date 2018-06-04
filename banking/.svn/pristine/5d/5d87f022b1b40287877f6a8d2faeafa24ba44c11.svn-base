@@ -1,0 +1,48 @@
+<template>
+	<el-container>
+		<!-- 二级路由 -->
+		<el-header class="header" height="60px">
+			<cms-header :tabs="tabs"></cms-header>
+		</el-header>
+		<!-- 二级路由 -->
+
+	<router-view></router-view>
+
+	</el-container>
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+export default {
+  name: "Cooperation",
+  data() {
+    const self = this;
+    return {
+      tabs: [{
+        name: "合作方",
+        path: "/cooperation/partners",
+        btns: [
+          {
+            name: "添加",
+            click: function() {
+              self.$store.commit(
+                "partners/tooglePartnersDialogActive",
+                true
+              );
+            }
+          }
+        ]
+      }]
+    };
+  },
+  components: {
+    cmsHeader
+  }
+};
+</script>
+
+<style scoped>
+.main {
+  background: #f2f3f5;
+}
+</style>

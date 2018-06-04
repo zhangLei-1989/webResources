@@ -1,0 +1,480 @@
+<template>
+  <el-container>
+
+
+    <!-- 头部 - 二级路由 -->
+    <el-header class="bg-white">
+      <cms-header :tabs="tabs"></cms-header>
+    </el-header>
+
+    <!-- 主体 - 内容 -->
+    <el-main>
+      <el-row :gutter="20">
+
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div>
+              <span class="text">放款总额</span><i>¥</i><span class="money">10,000,000</span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money">453</span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div>
+              <span class="text">已收款额</span><i>¥</i><span class="money">10,000,000</span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money">453</span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div>
+              <span class="text">逾期总额</span><i>¥</i><span class="money">10,000,000</span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money">453</span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div class="total">
+              <span class="text">已收利息</span><i>¥</i><span class="money">10,000,000</span>
+            </div>
+          </el-card>
+
+        </el-col>
+
+      </el-row>
+      <el-row :gutter="20">
+
+        <el-col :span="12">
+
+          <el-card class="msgBox">
+            <h1 class="title">待处理</h1>
+            <el-row>
+              <el-col :span="12" class="box-card-affair center">
+                <div class="examine contentBox clearfix">
+                  <div class="iconBox  edit1">
+
+                  </div>
+                  <div >
+                    <p class="number">47</p>
+                    <p class="text">待审批申请</p>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12" class="box-card-affair">
+                <div class="audit contentBox clearfix">
+                  <div class="iconBox edit2">
+
+                  </div>
+                  <div>
+                    <p class="number">123</p>
+                    <p class="text">待审核合同</p>
+                  </div>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12" class="">
+                <div class="contentBox clearfix">
+                  <div class="iconBox edit3">
+
+                  </div>
+                  <div>
+                    <p class="number">21</p>
+                    <p class="text">待打款合同</p>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12" class="box-card-affair">
+                <div class="contentBox clearfix">
+                  <div class="iconBox edit4">
+
+                  </div>
+                  <div>
+                    <p class="number">56</p>
+                    <p class="text">贷催收合同</p>
+                  </div>
+                </div>
+              </el-col>
+            </el-row>
+          </el-card>
+
+        </el-col>
+        <el-col :span="12">
+
+          <el-card class="msgBox msgBox2">
+            <h1 class="title">公司公告</h1>
+            <ul class="noticeList">
+              <li>121</li>
+            </ul>
+          </el-card>
+        </el-col>
+
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+           <el-card class="msgBox" style="height:auto;">
+             <div id="aaaa" :style="{width:'100%',height:'500px'}"></div>
+           </el-card>
+        </el-col>
+      </el-row>
+    </el-main>
+
+  </el-container>
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+
+export default {
+  name: "home",
+  data() {
+    return {
+      info: "home",
+      tabs: [{ name: "工作台", path: "/home" }]
+    };
+  },
+  components: {
+    cmsHeader
+  },
+  mounted() {
+    const chart = this.$echarts.init(document.getElementById("aaaa"));
+
+    var colors = ["#5793f3", "#d14a61", "#675bba"];
+    var option = {
+      color: colors,
+
+      tooltip: {
+        trigger: "none",
+        axisPointer: {
+          type: "cross"
+        }
+      },
+      legend: {
+        data: ["2015 降水量", "2016 降水量"]
+      },
+      grid: {
+        top: 70,
+        bottom: 50
+      },
+      xAxis: [
+        {
+          type: "category",
+          axisTick: {
+            alignWithLabel: true
+          },
+          axisLine: {
+            onZero: false,
+            lineStyle: {
+              color: colors[1]
+            }
+          },
+          axisPointer: {
+            label: {
+              formatter: function(params) {
+                return (
+                  "降水量  " +
+                  params.value +
+                  (params.seriesData.length
+                    ? "：" + params.seriesData[0].data
+                    : "")
+                );
+              }
+            }
+          },
+          data: [
+            "2016-1",
+            "2016-2",
+            "2016-3",
+            "2016-4",
+            "2016-5",
+            "2016-6",
+            "2016-7",
+            "2016-8",
+            "2016-9",
+            "2016-10",
+            "2016-11",
+            "2016-12"
+          ]
+        },
+        {
+          type: "category",
+          axisTick: {
+            alignWithLabel: true
+          },
+          axisLine: {
+            onZero: false,
+            lineStyle: {
+              color: colors[0]
+            }
+          },
+          axisPointer: {
+            label: {
+              formatter: function(params) {
+                return (
+                  "降水量  " +
+                  params.value +
+                  (params.seriesData.length
+                    ? "：" + params.seriesData[0].data
+                    : "")
+                );
+              }
+            }
+          },
+          data: [
+            "2015-1",
+            "2015-2",
+            "2015-3",
+            "2015-4",
+            "2015-5",
+            "2015-6",
+            "2015-7",
+            "2015-8",
+            "2015-9",
+            "2015-10",
+            "2015-11",
+            "2015-12"
+          ]
+        }
+      ],
+      yAxis: [
+        {
+          type: "value"
+        }
+      ],
+      series: [
+        {
+          name: "2015 降水量",
+          type: "line",
+          xAxisIndex: 1,
+          smooth: true,
+          data: [
+            2.6,
+            5.9,
+            9.0,
+            26.4,
+            28.7,
+            70.7,
+            175.6,
+            182.2,
+            48.7,
+            18.8,
+            6.0,
+            2.3
+          ]
+        },
+        {
+          name: "2016 降水量",
+          type: "line",
+          smooth: true,
+          data: [
+            3.9,
+            5.9,
+            11.1,
+            18.7,
+            48.3,
+            69.2,
+            231.6,
+            46.6,
+            55.4,
+            18.4,
+            10.3,
+            0.7
+          ]
+        }
+      ]
+    };
+    chart.setOption(option);
+  }
+};
+</script>
+<style scoped>
+.el-main {
+  background: #ecf0f4;
+}
+
+.header {
+  background: #fff;
+}
+
+.el-row {
+  margin-bottom: 20px;
+}
+
+.el-row:last-child {
+  margin-bottom: 0px;
+}
+
+.box-card {
+  border-radius: 3px;
+  position: relative;
+  height: 120px;
+  box-sizing: border-box;
+}
+
+.box-card div:nth-of-type(1) {
+  padding: 3px 0;
+}
+
+.box-card div:nth-of-type(2) {
+  padding-top: 6px;
+}
+
+.box-card .number {
+  width: 47px;
+  display: inline-block;
+  text-align: right;
+  color: #999;
+}
+
+.box-card .text {
+  color: #999999;
+}
+
+.box-card .money {
+  font-size: 26px;
+  color: #3e83f1;
+}
+
+.box-card i {
+  display: inline-block;
+  font-style: normal;
+  font-size: 12px;
+  color: #3e83f1;
+  padding: 0 4px 0 13px;
+}
+
+.box-card .total {
+  line-height: 70px;
+}
+
+.msgBox {
+  position: relative;
+  height: 250px;
+  box-sizing: border-box;
+  padding: 30px 0;
+  background: #fbfbfc;
+}
+.msgBox2 {
+  padding-top: 10px;
+}
+.msgBox .title {
+  position: absolute;
+  background: #188ff0;
+  width: 90px;
+  font-size: 14px;
+  color: #fff;
+  text-align: center;
+  height: 26px;
+  line-height: 26px;
+  border-radius: 0 0 10px 10px;
+  top: 0;
+  left: 50%;
+  margin-left: -45px;
+}
+
+.msgBox .contentBox {
+  width: 190px;
+  height: 78px;
+  margin-left: 20px;
+}
+
+.contentBox > div {
+  float: left;
+}
+
+.contentBox .iconBox {
+  width: 74px;
+  height: 78px;
+  border-radius: 10px;
+  margin-right: 15px;
+}
+
+.contentBox p {
+  margin: 0;
+}
+
+.contentBox .number {
+  font-size: 22px;
+  color: #404040;
+  margin-top: 14px;
+}
+
+.contentBox .text {
+  font-size: 14px;
+  color: #999;
+}
+
+.contentBox .edit1 {
+  background: #3099e3 url("../assets/image/edit_icon1.png") no-repeat 19px 18px;
+}
+
+.contentBox .edit2 {
+  background: transparent url("../assets/image/edit_icon2.png") no-repeat 19px
+    18px;
+}
+
+.contentBox .edit3 {
+  background: transparent url("../assets/image/edit_icon3.png") no-repeat 19px
+    18px;
+}
+
+.contentBox .edit4 {
+  background: transparent url("../assets/image/edit_icon4.png") no-repeat 19px
+    18px;
+}
+
+.msgBox .examine {
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.clearfix:after,
+.clearfix:before {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.clearfix {
+  zoom: 1;
+}
+
+.fl {
+  float: left;
+}
+
+.noticeList {
+  padding: 0;
+}
+.noticeList li {
+  font-size: 14px;
+  height: 45px;
+  line-height: 45px;
+}
+.noticeList li:before {
+  content: "";
+  background: #188ff0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+</style>

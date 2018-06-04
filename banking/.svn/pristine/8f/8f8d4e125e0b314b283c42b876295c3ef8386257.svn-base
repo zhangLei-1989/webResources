@@ -1,0 +1,277 @@
+<template>
+  <div class="roleManger">
+    <div class="roleManger_top">
+      <el-row>
+        <el-col :span="22" style="padding-right: 0">
+          <el-input placeholder="员工姓名、 员工编号" id="header_input"></el-input>
+        </el-col>
+        <el-col :span="2" style="padding: 0">
+          <span  class="searchBtn">搜索</span>
+        </el-col>
+      </el-row>
+    </div>
+    <div class="dataBox">
+      <table-list :tableOption="tableOption" class="roleTable"></table-list>
+    </div>
+    <!--添加员工-->
+    <el-dialog width="680px" :visible.sync="addStaffBtn" title="添加员工" class="addStaff">
+      <el-form>
+        <div class="title">登录信息</div>
+        <el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-input>
+                <template slot="prepend">登录名:</template>
+              </el-input>
+            </el-col>
+            <el-col :span="8" style="padding-right: 0;">
+              <el-input>
+                <template slot="prepend">密码:</template>
+              </el-input>
+            </el-col>
+            <el-col :span="4" style="padding-left: 0;">
+              <div class="reset">
+                重置密码
+              </div>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <div>员工信息</div>
+        <div class="imgBox"></div>
+        <el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-input>
+                <template slot="prepend">编号:</template>
+              </el-input>
+            </el-col>
+            <el-col :span="8">
+              <el-input>
+                <template slot="prepend">姓名:</template>
+              </el-input>
+            </el-col>
+            <el-col :span="8">
+              <el-input>
+                <template slot="prepend">手机号:</template>
+              </el-input>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="16">
+              <el-input>
+                <template slot="prepend">身份证号:</template>
+              </el-input>
+            </el-col>
+            <el-col :span="8">
+              <template>
+                <el-radio-group v-model="radio">
+                  <el-radio label="1">备选项</el-radio>
+                  <el-radio  label="2">备选项</el-radio>
+                </el-radio-group>
+              </template>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-select  placeholder="部门" value="">
+              <!--  <el-option>
+                </el-option>
+                <el-option>
+                </el-option>-->
+              </el-select>
+            </el-col>
+            <el-col :span="8">
+              <el-select placeholder="角色" value="">
+              <!--  <el-option>
+                </el-option>
+                <el-option>
+                </el-option>-->
+              </el-select>
+            </el-col>
+          </el-row>
+        </el-form-item>
+      </el-form>
+      <div class="el-footer" slot="footer">
+        <span class="save">保存</span>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  import tableList from "@/components/public/TableList";
+  export default {
+    name: "RoleManger",
+    data() {
+      return {
+        values:{
+          val:'',
+          val2:''
+        },
+        radio: '1',
+        addStaffBtn:false,
+        tableOption: {
+          doWidth: 135,
+          thead: [
+            {
+              prop: "number",
+              label: "员工编号",
+            },
+            {
+              prop: "name",
+              label: "员工姓名",
+              minWidth:100
+            },
+            {
+              prop: "department",
+              label: "部门",
+            },
+            {
+              prop: "rule",
+              label: "角色",
+            },
+            {
+              prop: "phone",
+              label: "电话",
+            },
+            {
+              prop: "state",
+              label: "状态",
+            },
+            {
+              prop: "loginTime",
+              label: "上次登录时间",
+              minWidth:190
+            }
+          ],
+          data: [
+            {
+              number:'员工编号',
+              name:'员工姓名',
+              department:'部门',
+              rule:'角色',
+              phone:'电话',
+              state:'状态',
+              loginTime:'上次登录时间'
+            }
+          ],
+          controButton: [
+            {
+              name: "编辑",
+              event: "@click"
+            },
+            {
+              name: "删除",
+              event: "@click"
+            }
+          ]
+        }
+      };
+    },
+    mounted() {},
+    components:{
+      tableList
+    }
+  };
+</script>
+
+<style scoped>
+  /*添加员工弹窗*/
+  /deep/ .addStaff  .el-dialog__body {
+    padding: 30px 25px 0 25px;
+  }
+  /deep/ .addStaff .el-dialog__title{
+     color: #188ff0;
+  }
+  .addStaff .title{
+    color: #404040;
+    font-size: 14px;
+    padding-left: 9px;
+    border-left:3px solid #188ff0;
+    margin-bottom: 15px;
+  }
+  .addStaff .imgBox{
+    width: 85px;
+    height: 85px;
+    background-color: #e1eaec;
+    margin-bottom: 15px;
+  }
+  /deep/.addStaff .el-input-group__prepend{
+    padding:  0 4px 0  10px;
+    background: #fff;
+  }
+  /deep/.addStaff .el-input-group__prepend::before{
+    content: "*";
+    color: #ff0000;
+    position: absolute;
+    top:2px;
+    left: 2px;
+  }
+  /deep/.addStaff .el-input input{
+    border: none;
+  }
+  /deep/.addStaff .el-input-group__prepend{
+    border: none;
+  }
+  /deep/.addStaff .el-input{
+    border: 1px solid #e6eced;;
+  }
+  .addStaff .save{
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 40px;
+    display: inline-block;
+    color: #ffffff;
+    font-size: 16px;
+  }
+  .addStaff .reset{
+    width: 80px;
+    height: 42px;
+    line-height: 42px;
+    text-align: center;
+    background-color: #ffffff;
+    border: solid 1px #e6eced;
+    border-left:none;
+  }
+  /*end*/
+  /deep/.roleTable th,
+  /deep/.roleTable td{
+    text-align: center;
+  }
+  /deep/.roleManger_top {
+    margin-bottom: 20px;
+    height: 96px;
+    background: #fff;
+  }
+  /deep/ .roleManger_top .el-row{
+    padding-top: 26px;
+  }
+  /deep/ .roleManger_top .el-input{
+    padding-left: 10px;
+  }
+.dataBox {
+    overflow: auto;
+    min-height: calc(100vh - 220px);
+    border:20px solid #fff ;
+    box-sizing: border-box;
+    box-shadow: 0 0 4px  rgba(0,0,0,.1);
+  }
+  .roleManger_top .searchBtn{
+    width: 100px;
+    display:inline-block;
+    vertical-align: bottom;
+    width: 84px;
+    text-align: center;
+    line-height: 40px;
+    height: 40px;
+    background: #188ff0;
+    color: #fff;
+  }
+</style>

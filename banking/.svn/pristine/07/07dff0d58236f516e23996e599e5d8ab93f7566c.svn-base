@@ -1,0 +1,349 @@
+<template>
+  <el-main v-loading="loading" class="DictManger">
+    <div class="dictSide">
+      <el-tabs type="card" class="dictSideTab">
+        <el-tab-pane v-for="(item,index) in tabList" :label="item.tabName" :key="index">
+          <el-row  class="tableWrap">
+            <el-col :span="24">
+              <table-list :tableOption="item.tabData"></table-list>
+            </el-col>
+          </el-row>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </el-main>
+</template>
+
+<script>
+  import tableList from "@/components/public/TableList";
+
+  export default {
+    name: "AlreadyAdopted",
+    data() {
+      return {
+        loading: false,
+        tabList: [
+          {
+            tabName: '借款利率年化',
+            tabData: {
+              doWidth:136,
+              thead: [
+                {
+                  prop: "content",
+                  label: "内容",
+                  minWidth: 250
+                },
+                {
+                  prop: "order",
+                  label: "排序",
+                  minWidth: 210
+                },
+                {
+                  prop: "desc",
+                  label: "描述",
+                  minWidth: 280
+                }
+              ],
+              data: [
+                {
+                  content: "0.01%",
+                  order: "0",
+                  desc: '描述'
+                },
+                {
+                  content: "0.01%",
+                  order: "0",
+                  desc: '描述'
+                }
+              ],
+              controButton: [
+                {
+                  name: "编辑",
+                  event: "@click"
+                },
+                {
+                  name: "删除",
+                  event: "@click"
+                }
+              ]
+            }
+          },
+          {
+            tabName: '借款用途',
+            tabData: {
+              doWidth:136,
+              thead: [
+                {
+                  prop: "content",
+                  label: "内容",
+                  minWidth: 250
+                },
+                {
+                  prop: "order",
+                  label: "排序",
+                  minWidth: 210
+                },
+                {
+                  prop: "desc",
+                  label: "描述",
+                  minWidth: 280
+                }
+              ],
+              data: [
+                {
+                  content: "房屋出租",
+                  order: "0",
+                  desc: '描述'
+                },
+                {
+                  content: "房屋出租",
+                  order: "0",
+                  desc: '描述'
+                }
+              ],
+              controButton: [
+                {
+                  name: "编辑",
+                  event: "@click"
+                },
+                {
+                  name: "删除",
+                  event: "@click"
+                }
+              ]
+            }
+          },
+          {
+            tabName: '款项用途',
+            tabData: {
+              doWidth:136,
+              thead: [
+                {
+                  prop: "content",
+                  label: "内容",
+                  minWidth: 250
+                },
+                {
+                  prop: "order",
+                  label: "排序",
+                  minWidth: 210
+                },
+                {
+                  prop: "desc",
+                  label: "描述",
+                  minWidth: 280
+                }
+              ],
+              data: [
+                {
+                  content: "房屋出租",
+                  order: "0",
+                  desc: '描述'
+                },
+                {
+                  content: "房屋出租",
+                  order: "0",
+                  desc: '描述'
+                }
+              ],
+              controButton: [
+                {
+                  name: "编辑",
+                  event: "@click"
+                },
+                {
+                  name: "删除",
+                  event: "@click"
+                }
+              ]
+            }
+          },
+          {
+            doWidth:136,
+            tabName: '乙方信息',
+            tabData: {
+              doWidth:136,
+              thead: [
+                {
+                  prop: "name",
+                  label: "企业名称",
+                  minWidth: 180
+                },
+                {
+                  prop: "address",
+                  label: "住所地",
+                  minWidth: 260
+                },
+                {
+                  prop: "behalf",
+                  label: "法定代表",
+                  minWidth: 100
+                },
+                {
+                  prop: "phone",
+                  label: "电话",
+                  minWidth: 120
+                },
+                {
+                  prop: "order",
+                  label: '排序',
+                  minWidth: 81
+                }
+              ],
+              data: [
+                {
+                  name: 'xxxx有限公司',
+                  order: 0,
+                  behalf:'高雨婷',
+                  address:'北京海淀区安宁庄前街2号',
+                  phone:'18673736621'
+                }
+              ],
+              controButton: [
+                {
+                  name: "编辑",
+                  event: "@click"
+                },
+                {
+                  name: "删除",
+                  event: "@click"
+                }
+              ]
+            }
+          }
+        ],
+        formInline: {
+          user: "",
+          region: ""
+        },
+
+        //筛选的过滤信息
+        screening: {
+          areaValue: "", //城市/区域
+          area: [] //城市/区域
+        },
+        // 列表数据
+        tableOption: {
+          thead: [
+            {
+              prop: "type",
+              label: "公告类型",
+              minWidth: 180
+            },
+            {
+              prop: "createTime",
+              label: "创建时间",
+              minWidth: 170
+            },
+            {
+              prop: "updateTime",
+              label: "修改时间",
+              minWidth: 170
+            },
+            {
+              prop: "describe",
+              label: "描述",
+              minWidth: 260
+            }
+          ],
+          data: [
+            {
+              type: "财务经理",
+              createTime: "2017.1.12  15:11",
+              updateTime: "2017.2.13  18:34",
+              describe: "描述描述"
+            }
+          ],
+          controButton: [
+            {
+              name: "修改权限",
+              event: "@click"
+            },
+            {
+              name: "编辑",
+              event: "@click"
+            },
+            {
+              name: "删除",
+              event: "@click"
+            }
+          ]
+        },
+        //表格信息
+        table: {
+          thead: [],
+          tbody: [
+            {
+              a1: "待审核",
+              a2_name: "世纪源公寓公司1",
+              a2_date_pruce: "5,000,000元  2017-11-30",
+              a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+              a4_name: "愚租贷 每月等额",
+              a4_date_pruce: "2017-11-30 16:20:12"
+            },
+            {
+              a1: "待审核",
+              a2_name: "世纪源公寓公司",
+              a2_date_pruce: "5,000,000元  2017-11-30",
+              a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+              a4_name: "愚租贷 每月等额",
+              a4_date_pruce: "2017-11-30 16:20:12"
+            }
+          ],
+          tfoot: [],
+          currentPage: 1,
+          pageSize: 10,
+          totalRecord: 0
+        }
+      };
+    },
+    components: {
+      tableList
+    }
+  };
+</script>
+
+<style scoped>
+  /deep/ .dictSideTab .el-tabs__item {
+    display: block;
+    border: none;
+    font-size: 14px;
+    text-align: center;
+    color: #404040;
+  }
+
+  /deep/ .dictSideTab .el-tabs__item.is-active {
+    background: #f2f4f7;
+  }
+
+  /deep/ .dictSideTab .el-tabs__nav-wrap {
+    float: left;
+    background: #e8eaed;
+    min-height: calc(100vh - 140px);
+  }
+
+  /deep/ .dictSideTab .el-tabs__nav {
+    border: none;
+  }
+
+  .dictSide {
+    border: 20px solid #fff;
+    overflow: auto;
+  }
+
+  /deep/.DictManger.el-main {
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+    padding: 0px;
+  }
+
+  .tableWrap {
+    background: #f2f4f7;
+    display: flex;
+    padding-left: 20px;
+  }
+
+  /deep/ .tableWrap th,
+  /deep/ .tableWrap td {
+    text-align: center;
+  }
+</style>

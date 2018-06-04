@@ -1,0 +1,246 @@
+<template>
+	<el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.user" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.user" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="formInline.region" placeholder="用款时间" style="width:100px;">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+            <el-date-picker
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.user" placeholder="借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe>
+          <el-table-column 
+            prop="a1"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state">已通过</span>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a2"
+            label="借款人/金额/用款时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a2_name }}</p>
+                <p>{{ scope.row.a2_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a3"
+            label="房源信息">
+          </el-table-column>
+          <el-table-column 
+            prop="a4"
+            label="类别/还款方式/申请时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a4_name }}</p>
+                <p>{{ scope.row.a4_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            prop="handle"
+            label="操作"
+            width="130">
+            <template slot-scope="scope">
+              <el-select v-model="screening.areaValue" placeholder="生成合同" style="width:100%;">
+                <el-option
+                  v-for="item of screening.area"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="table.currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+	</el-main>
+</template>
+
+<script>
+export default {
+  name: "AlreadyAdopted",
+  data() {
+    return {
+      loading: false,
+
+      formInline: {
+        user: "",
+        region: ""
+      },
+
+      //筛选的过滤信息
+      screening: {
+        areaValue: "", //城市/区域
+        area: [] //城市/区域
+      },
+
+      //表格信息
+      table: {
+        thead: [],
+        tbody: [
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司1",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3: "北京海淀区西二旗智学苑3号楼5单元601室",
+            a4_name: "愚租贷 每月等额",
+            a4_date_pruce: "2017-11-30 16:20:12"
+          }
+        ],
+        tfoot: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_blue.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+</style>

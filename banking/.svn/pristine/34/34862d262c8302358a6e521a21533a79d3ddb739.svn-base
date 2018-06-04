@@ -1,0 +1,572 @@
+<template>
+<el-main v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+  <el-row class="search">
+      <el-col :span="24">
+        <el-form :inline="true" class="demo-form-inline" style="display:flex;">
+          <el-form-item class="noMarginRight noMarginBottom" style="flex:1;padding-right:0px;">
+            <el-input placeholder="角色名称"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight noMarginBottom">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+  <div class="corporateNotice">
+    <div class="tableBox">
+        <el-table
+          :data="table.tbody"
+          border
+          style="width: 100%" @row-click="tableRowClick">
+          <el-table-column
+            label="公告类型">
+            <template slot-scope="scope">
+              <span v-if="scope.row.noticeType==10">通知</span>
+              <span v-if="scope.row.noticeType==20">假期</span>
+              <span v-if="scope.row.noticeType==30">奖励</span>
+              <span v-if="scope.row.noticeType==40">惩罚</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="title"
+            label="公告标题">
+          </el-table-column>
+          <el-table-column
+            prop="ct"
+            label="发布时间">
+          </el-table-column>
+          <el-table-column
+            label="发布人">
+            <template slot-scope="scope">
+             <span v-text="scope.row.ctId.nickName"></span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="120">
+            <template slot-scope="scope">
+              <el-button type="text" @click="openDetailDialog(scope.row.id)">编辑</el-button>
+              <el-button type="text" @click="openDeleteDialog(scope.row.id)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-row class="noMargin search">
+          <el-col :span="24">
+            <el-pagination
+              background
+              @current-change="currentChange"
+              @size-change="sizeChange"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="table.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="table.totalRecord">
+            </el-pagination>
+          </el-col>
+        </el-row>
+    </div>
+  </div>
+    <el-dialog
+      title="添加公告"
+      width="70%"
+      :visible="addDialogActive"
+      :before-close="closeDialog">
+      <el-row v-loading="loading.submit" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <el-form>
+            <el-form-item required >
+              <el-select  placeholder="请选择类型" v-model="form.noticeType">
+                <el-option label="通知" value="10"></el-option>
+                <el-option label="假期" value="20"></el-option>
+                <el-option label="奖励" value="30"></el-option>
+                <el-option label="惩罚" value="40"></el-option>   
+              </el-select>
+            </el-form-item>
+            <el-form-item required>
+              <el-input placeholder="请输入标题" v-model="form.title"></el-input>
+            </el-form-item>
+            <el-form-item required>
+              <UEditor :defaultMsg="form.content" :config="config" ref="UEditor"></UEditor>
+            </el-form-item>
+          </el-form>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="save">确定</el-button>
+      </template>
+    </el-dialog>
+    <!--删除公告-->
+    <el-dialog
+      title="删除公告"
+      width="30%"
+      :visible="dialog.deleted"
+      :before-close="closeDeleteDialog">
+      <el-row v-loading="loading.deleted" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <p class="error-success">您确定删除该条记录吗？</p>
+          <el-input type="textarea" placeholder="请输入删除原因" v-model="dialog.deleted_msg.deleteWhy"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="deleted">确定</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="公共详情"
+      width="70%"
+      :visible="dialog.detail"
+      :before-close="closeDetail">
+      <el-row v-loading="loading.detail" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <h1 v-text="dialog.detail_msg.title" class="detail-title"></h1>
+          <time v-text="dialog.detail_msg.ct" class="detail-date"></time>
+          <div v-html="dialog.detail_msg.content" class="detail-content"></div>
+        </el-col>
+      </el-row>
+    </el-dialog>
+</el-main>
+</template>
+
+<script>
+import UEditor from "../public/UEditor.vue";
+import validation from "../../../static/js/validation.js";
+import tool from "../../../static/js/tool.js";
+import { mapState } from "vuex";
+export default {
+  name: "RoleManger",
+  data() {
+    return {
+      //loading信息
+      loading: {
+        all: true, //整页的loading
+        deleted: false, //删除的loading
+        submit: false, //提交的loading
+        detail: true //详情的loading
+      },
+
+      //弹出框信息
+      dialog: {
+        detail: false, //是否显示，查看详情弹出框
+        detail_msg: {}, //详情弹出框内容
+        deleted: false, //删除弹出框
+        deleted_msg: {
+          id: "", //员工id
+          deleteWhy: "" //删除员工的原因
+        }
+      },
+
+      form: {
+        id: "",
+        title: "", //标题
+        noticeType: "", //公告类型
+        content: "阿斯顿撒旦" //内容
+      },
+
+      //表格信息
+      table: {
+        tbody: [], //表格数据
+        currentPage: 1, //当前页
+        pageSize: 10, //每页条数
+        totalRecord: 0 //总条数
+      },
+      defaultMsg: "请输入公共内容",
+      config: {
+        initialFrameWidth: null,
+        initialFrameHeight: 350
+      }
+    };
+  },
+  computed: mapState({
+    addDialogActive: state => state.corporateBulletin.corporateDialogActive
+  }),
+  methods: {
+    //关闭，新增 or 修改弹出框
+    closeDialog() {
+      this.resetForm();
+      this.$store.commit(
+        "corporateBulletin/toogleCorporateDialogActive",
+        false
+      );
+    },
+
+    //打开详情弹出框
+    openDetailDialog(id) {
+      const self = this;
+      self.loading.submit = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.companyNotice.get,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+            params: {
+              id: id
+            }
+          }
+        })
+        .then(response => {
+          self.loading.submit = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            const { result: companyNotice } = data;
+            self.form.title = companyNotice.title;
+            self.form.content = companyNotice.content;
+            self.form.noticeType = companyNotice.noticeType.id;
+          }
+        })
+        .catch(error => {
+          self.loading.submit = false;
+        });
+      self.$store.commit("corporateBulletin/toogleCorporateDialogActive", true);
+    },
+
+    //打开删除弹出框
+    openDeleteDialog(id) {
+      this.dialog.deleted_msg.id = id;
+      this.dialog.deleted = true;
+    },
+
+    //打开删除弹出框
+    closeDeleteDialog() {
+      this.dialog.deleted = false;
+    },
+
+    //重置表单
+    resetForm() {
+      const self = this;
+      self.form.id = "";
+      self.form.title = "";
+      self.form.content = "";
+      self.form.noticeType = "";
+    },
+
+    /**-----当前页改变时调用----- */
+    currentChange(currentPage) {
+      const self = this;
+      self.table.currentPage = currentPage;
+      self.init();
+    },
+
+    /**-----每页条目改变时调用----- */
+    sizeChange(pageSize) {
+      const self = this;
+      self.table.currentPage = 1;
+      self.table.pageSize = pageSize;
+      self.init();
+    },
+
+    //保存公告
+    save() {
+      const self = this;
+
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      const validate = new validation();
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.noticeType,
+        "请选择公告类型！"
+      );
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.title,
+        "公告标题不能为空！"
+      );
+      validate.addRule(
+        validation.rules.isEmptyOrNull,
+        self.form.content,
+        "公告内容不能为空！"
+      );
+      const result = validate.startValidate();
+      if (result) {
+        self.$message.error(result);
+      } else {
+        if (!self.loading.submit) {
+          self.loading.submit = true;
+          self
+            .axios({
+              method: "post",
+              url: self.$store.state.api.setting.companyNotice.insert,
+              data: {
+                gcid: "0100099",
+                userid: userid,
+                params: {
+                  id: self.form.id,
+                  title: self.form.title,
+                  content: self.form.content,
+                  noticeType: self.form.noticeType
+                }
+              }
+            })
+            .then(response => {
+              self.loading.submit = false;
+              const { data } = response;
+              if (data.status.code == 200) {
+                self.$alert("操作成功", "提示", {
+                  callback: action => {
+                    self.init();
+                    self.closeDialog();
+                  }
+                });
+              }
+            })
+            .catch(error => {
+              self.loading.submit = false;
+            });
+        }
+      }
+    },
+
+    //删除公告
+    deleted() {
+      const self = this;
+      if (self.dialog.deleted_msg.id && !self.loading.deleted) {
+        self.loading.deleted = true;
+        self
+          .axios({
+            method: "post",
+            url: self.$store.state.api.setting.companyNotice.deleteById,
+            data: {
+              gcid: "0100099",
+              userid: "ab0f10cd02094f7b9b82b82088742557",
+              token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+              params: {
+                id: self.dialog.deleted_msg.id,
+                deleteWhy: self.dialog.deleted_msg.deleteWhy
+              }
+            }
+          })
+          .then(response => {
+            self.loading.deleted = false;
+            const { data } = response;
+            if (data.status.code == 200) {
+              self.$alert("操作成功", "提示", {
+                callback: action => {
+                  self.init();
+                  self.closeDeleteDialog();
+                }
+              });
+            }
+          })
+          .catch(error => {
+            self.loading.deleted = false;
+          });
+      }
+    },
+
+    //页面初始化
+    init() {
+      const self = this;
+      self.loading.all = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.companyNotice.getList,
+          data: {
+            gcid: "0100099",
+            userid: "ab0f10cd02094f7b9b82b82088742557",
+            token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+            pageNo: self.table.currentPage,
+            pageSize: self.table.pageSize
+          }
+        })
+        .then(response => {
+          self.loading.all = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.table.tbody = data.result.list;
+            self.table.totalRecord = data.result.totalRecord;
+          }
+        })
+        .catch(error => {
+          self.loading.all = false;
+        });
+    },
+
+    /**-----显示，查看详情弹出框----- */
+    openDetail(id) {
+      this.dialog.detail = true;
+      this.getDetail(id);
+    },
+    /**-----隐藏，查看详情弹出框----- */
+    closeDetail() {
+      this.dialog.detail = false;
+    },
+
+    /**-----查询详情数据----- */
+    getDetail(id) {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      //开启loading
+      self.loading.detail = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.companyNotice.get,
+          data: {
+            gcid: "0100099",
+            userid: userid,
+            params: {
+              id: id
+            }
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading.detail = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.dialog.detail_msg = data.result;
+          }
+        })
+        .catch(error => {
+          self.loading.detail = false;
+        });
+    },
+
+    /**-----点击单行时触发----- */
+    tableRowClick(row) {
+      const self = this;
+      if (row && row.id) {
+        self.openDetail(row.id);
+      }
+    }
+  },
+  created() {
+    this.init();
+  },
+  components: {
+    UEditor
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-textarea__inner {
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/.corporateNotice th,
+/deep/.corporateNotice td {
+  text-align: center;
+}
+/deep/.corporateNoticeTable .el-table__body-wrapper tr td:nth-of-type(2) {
+  color: #188ff0;
+}
+/deep/ .corporateNotice_top .el-col {
+  padding-top: 18px;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+.corporateNotice_top {
+  background: #fff;
+  height: 76px;
+  margin-bottom: 30px;
+}
+.noMarginRight {
+  padding-right: 10px;
+}
+.dateBox {
+  position: relative;
+}
+.dateBox .data_text {
+  position: absolute;
+  z-index: 10;
+  left: 6px;
+  font-size: 14px;
+  color: #585858;
+}
+.corporateNotice_top .noticeType {
+  padding-left: 10px;
+}
+/deep/.corporateNotice .tableBox {
+  overflow: auto;
+  min-height: calc(100vh - 200px);
+  border: 20px solid #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+/deep/.corporateNotice .tableBox .el-table {
+}
+/deep/ .el-table {
+  min-height: calc(100vh - 315px);
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 24px;
+}
+.error-message {
+  font-size: 14px;
+  color: #f2082e;
+  margin-bottom: 10px;
+}
+.error-success {
+  font-size: 14px;
+  color: #188ff0;
+  margin-bottom: 10px;
+}
+.detail-title {
+  font-size: 24px;
+  text-align: center;
+}
+.detail-date {
+  font-size: 14px;
+  line-break: 80px;
+  text-align: center;
+  display: block;
+}
+.detail-content {
+  width: 80%;
+  margin: 0px auto;
+}
+</style>

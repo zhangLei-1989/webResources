@@ -1,0 +1,1458 @@
+<template>
+  <el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="searchMsg.minPrice" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="searchMsg.maxPrice" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item style="width: 360px;margin-right: 0;">
+            <span style="margin-left:10px;">合同时间</span>
+            <el-date-picker
+              size="large"
+              type="daterange"
+              v-model="searchMsg.time"
+              range-separator="—"
+              value-format="yyyy-MM-dd"
+              start-placeholder="开始日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="searchMsg.likeName" placeholder="合同编号 / 借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="search">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+    <el-table :data="listResult.financeList" stripe @row-click="showDetail">
+      <el-table-column
+        prop="a1"
+        label="状态">
+        <template slot-scope="scope">
+          <span class="finance-state" :class="{yellow:scope.row.classNum==1,blue:scope.row.classNum==2}">{{computedState(scope.row)}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a2"
+        label="应收时间 / 合同编码">
+        <template slot-scope="scope">
+          <p>
+            <span class="repayment-state"
+                  :class="{red:scope.row.num==1,yellow:scope.row.num==2,
+                  green:scope.row.num==3}" v-show="scope.row.num!=0"
+            >
+              {{scope.row.numClass}}
+              {{computedTime(scope.row)}}
+            </span>
+            {{scope.row.repayDate|date}}
+          </p>
+          <p style="color:#188ff0;">{{scope.row.contractNo}}</p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a3"
+        label="应收金额(本金 / 利息 / 滞纳金)">
+        <template slot-scope="scope">
+          <p>{{allMoney(scope.row)}}</p>
+          <p>{{scope.row.planPrice}}/ {{scope.row.interest}} / {{ scope.row.lateFee }}</p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a4"
+        label="期数 / 总期数 / 借款人 /联系方式">
+        <template slot-scope="scope">
+          <p style="color:#188ff0;" @click.stop="showContractPlan(scope.row)">{{ scope.row.currDuration}}/{{
+            scope.row.totalDuration}}</p>
+          <p>{{receiptMoney(scope.row)}} {{scope.row.apartmentPhone}}</p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        fixed="right"
+        label="操作"
+        width="130">
+        <template slot-scope="scope">
+          <div @click.stop="stopPor">
+            <el-select v-model="screening.areaValue[scope.$index]" placeholder="查看合同" style="width:100%;"
+                       @change="handleDo(scope)">
+              <el-option label="确认收款" value="0"></el-option>
+              <el-option label="短信催收" value="1"></el-option>
+              <el-option label="减免滞纳金" value="2"></el-option>
+            </el-select>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="pageSize"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <!--弹框 start-->
+    <!--确认收款-->
+    <el-dialog
+      title="确认收款"
+      :visible.sync="confirmReceiptBtn"
+      width="550px" class="confirmReceipt"
+    >
+      <div class="confirmReceipt_top">
+        <el-row class="receivable">
+          <el-col :span="2" class="item_name">应收:</el-col>
+          <el-col :span="22" class="item_content">$5200.00</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="2" class="item_name">本金:</el-col>
+          <el-col :span="6">5000</el-col>
+          <el-col :span="2" class="item_name">利息:</el-col>
+          <el-col :span="6">1800</el-col>
+          <el-col :span="3" class="item_name">滞纳金:</el-col>
+          <el-col :span="5">200</el-col>
+        </el-row>
+      </div>
+      <div class="confirmReceipt_middle">
+        <el-row class="sure_reject">
+          <el-col :span="2" class="item_name">实收:</el-col>
+          <el-col :span="22" class="item_content">$5200.00</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="6" class="item_name">实际收款时间:</el-col>
+          <el-col :span="18" class="item_content">5000</el-col>
+        </el-row>
+      </div>
+      <div class="image_box">
+        <img src="../../../static/image/bank.jpg" alt="">
+        <img src="../../../static/image/nongye.jpg">
+      </div>
+      <p class="beizhu">
+        备注: <span></span>
+      </p>
+      <span slot="footer" class="dialog-footer">
+        <div class="cancel">取消</div>
+        <div class="sure">确认</div>
+      </span>
+    </el-dialog>
+    <!--查看收支详情-->
+    <el-dialog class="paymentDetail"
+               title="查看收支详情"
+               :visible.sync="paymentDetailBtn"
+               width="700px"
+    >
+      <div style="height: 400px;overflow: auto">
+        <div class="paymentDetail_top" :class="{h:!paymentDetailController}">
+          <h2 class="title">基本信息</h2>
+          <el-row>
+            <el-col :span="3">本期应收</el-col>
+            <el-col :span="5">
+              {{getMoney(viewDetailData.financeBill.planPrice,viewDetailData.financeBill.lateFee,viewDetailData.financeBill.exemptLateFee,viewDetailData.financeBill.exemptLateFeeStatus)}}
+            </el-col>
+            <el-col :span="3">应收时间</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.repayDate}}</el-col>
+            <el-col :span="3">期数/总</el-col>
+            <el-col :span="5">
+              {{viewDetailData.financeBill.currDuration}}/{{viewDetailData.financeBill.totalDuration}}
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="3">本金</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.principal}}</el-col>
+            <el-col :span="3">利息</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.interest}}</el-col>
+            <el-col :span="3">滞纳金</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.lateFee}}</el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="3">借款人</el-col>
+            <el-col :span="5">{{viewDetailData.contract.apartmentName}}</el-col>
+            <el-col :span="3">联系电话</el-col>
+            <el-col :span="5">{{viewDetailData.contract.apartmentPhone}}</el-col>
+            <el-col :span="3">合同编号</el-col>
+            <el-col :span="5">{{viewDetailData.contract.no}}</el-col>
+          </el-row>
+        </div>
+        <div class="paymentDetail_middle" v-if="paymentDetailController">
+          <h2 class="title">减免滞纳金</h2>
+          <el-row>
+            <el-col :span="3">原滞纳金</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.lateFee}}</el-col>
+            <el-col :span="3">减免金额</el-col>
+            <el-col :span="13">{{viewDetailData.financeBill.exemptLateFee?
+              viewDetailData.financeBill.exemptLateFee:0}}
+            </el-col>
+          </el-row>
+          <el-row v-show="viewDetailData.financeBill.exemptLateFeeStatus==1">
+            <el-col :span="3">操作人</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.apartmentUser}}</el-col>
+            <el-col :span="3">操作时间</el-col>
+            <el-col :span="13">{{viewDetailData.financeBill.apartmentDate}}</el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="3">减免时间</el-col>
+            <el-col :span="21">{{viewDetailData.financeBill.exemptLateFeeDate}}</el-col>
+          </el-row>
+        </div>
+        <div class="paymentDetail_bot" v-if="paymentDetailController"
+             v-show="viewDetailData.financeBill.exemptLateFeeStatus ==0">
+          <h2 class="title">恢复原滞纳金</h2>
+          <el-row>
+            <el-col :span="3">操作人</el-col>
+            <el-col :span="5">{{viewDetailData.financeBill.exemptLateFeePeople}}</el-col>
+            <el-col :span="3">操作时间</el-col>
+            <el-col :span="13">{{viewDetailData.financeBill.apartmentDate}}</el-col>
+          </el-row>
+        </div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="paymentDetailBtn = false" type="primary">确定</el-button>
+      </div>
+    </el-dialog>
+    <!--减免滞纳金-->
+    <el-dialog
+      title="减免滞纳金"
+      :visible.sync="breaksMoneyBtn"
+      width="550px"
+      class="breaksMoney">
+      <div class="breakMoney_top">
+        <span class="breaksMoney_text">截止今日应收滞纳金:</span>
+        <span class="breaksMoney_money">400.00元</span>
+      </div>
+      <div>
+        <div class="money_num">
+          <label>减免金额</label>
+          <input type="text">
+          <span class="unit">元</span>
+        </div>
+        <div class="remake">
+          <textarea placeholder="备注原因"></textarea>
+        </div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+         <div class="revertBtn">恢复原始滞纳金</div>
+         <div class="sureBtn">确认</div>
+      </span>
+    </el-dialog>
+    <!--确认已收到款项  pass (可编辑内容)-->
+    <el-dialog
+      title="确认收款"
+      class="confirmReceiptInput"
+      width="450px"
+      :visible.sync="confirmReceiptInputBtn">
+      <div class="textMsg">确认已经收到该笔款项?</div>
+      <textarea class="edit" placeholder="输入原因(可选 )"></textarea>
+      <div class="dialog-footer" slot="footer">
+        <div class="sureBtn2">确认</div>
+      </div>
+    </el-dialog>
+    <!--驳回弹窗-->
+    <el-dialog
+      title="驳回"
+      width="450px"
+      class="paymentReject"
+      :visible.sync="paymentRejectBtn">
+      <div class="textMsg textMsg2">确认要驳回该笔款项?</div>
+      <textarea class="edit" placeholder="输入原因(可选 )"></textarea>
+      <div class="dialog-footer" slot="footer">
+        <div class="sureBtn2">确认</div>
+      </div>
+    </el-dialog>
+    <!-- 查看收支详情  确认收款 -->
+    <el-dialog
+      class="waitBack"
+      title="查看收支详情"
+      width="700px"
+      :visible.sync="waitBackBtn">
+      <div class="waitBack_item">
+        <h2 class="item_title">基本信息</h2>
+        <el-row>
+          <el-col :span="3" class="item_name">本期应收</el-col>
+          <el-col :span="5" class="item_content"> 50200</el-col>
+          <el-col :span="3" class="item_name">应收时间</el-col>
+          <el-col :span="13" class="item_content">2017-12-12</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">本金</el-col>
+          <el-col :span="5" class="item_content"> 50000</el-col>
+          <el-col :span="3" class="item_name">利息</el-col>
+          <el-col :span="5" class="item_content">100</el-col>
+          <el-col :span="3" class="item_name">滞纳金</el-col>
+          <el-col :span="5" class="item_content">100</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认状态</el-col>
+          <el-col :span="5" class="item_content">驳回</el-col>
+          <el-col :span="3" class="item_name">联系电话</el-col>
+          <el-col :span="5" class="item_content">18938473758"</el-col>
+          <el-col :span="3" class="item_name">合同编号</el-col>
+          <el-col :span="5" class="item_content">32623772328</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3">借款人</el-col>
+          <el-col :span="21">xxxx公司</el-col>
+        </el-row>
+      </div>
+      <div class="waitBack_item sureBox">
+        <h2 class="item_title">确认收款</h2>
+        <el-row>
+          <el-col :span="3" class="item_name">本期实收</el-col>
+          <el-col :span="5" class="item_content">50200</el-col>
+          <el-col :span="3" class="item_name">实收时间</el-col>
+          <el-col :span="13" class="item_content">2017-12-12</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认人</el-col>
+          <el-col :span="5" class="item_content">高雨婷</el-col>
+          <el-col :span="3" class="item_name">确认时间</el-col>
+          <el-col :span="5" class="item_content">2017-12-12 08:42:12</el-col>
+          <el-col :span="3" class="item_name">确认状态</el-col>
+          <el-col :span="5" class="item_content">驳回</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认备注</el-col>
+          <el-col :span="21" class="item_content">收据不清晰</el-col>
+        </el-row>
+      </div>
+      <ul class="img_list">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+      </ul>
+      <div class="dialog-footer" slot="footer">
+        <div class="sureGet">确认收款</div>
+      </div>
+    </el-dialog>
+    <!--查看合同 有合同书 -->
+    <el-dialog
+      class="viewContract"
+      title="查看合同"
+      :visible.sync="viewContractBtn"
+      width="700px">
+      <div class="viewContract_top">
+        <el-row>
+          <el-col :span="3" class="item_name">合同编号</el-col>
+          <el-col :span="5" class="item_content">hz090890</el-col>
+          <el-col :span="3" class="item_name">合同类别</el-col>
+          <el-col :span="7" class="item_content">寓租贷</el-col>
+          <el-col :span="3" class="item_name">合同金额</el-col>
+          <el-col :span="3" class="item_content">500000.00</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">合同期限</el-col>
+          <el-col :span="5" class="item_content">1年</el-col>
+          <el-col :span="3" class="item_name">合同时间</el-col>
+          <el-col :span="7" class="item_content"> 2017-12-26 - 2017-12-25</el-col>
+          <el-col :span="3" class="item_name">合同状态</el-col>
+          <el-col :span="3" class="item_content effect">生效中</el-col>
+        </el-row>
+      </div>
+      <div class="tabWrapBox">
+        <template>
+          <el-tabs v-model="activeName">
+            <el-tab-pane label="借款合同" name="first">
+              <div>
+                <img src='../../../static/image/contract.png' alt="" class="contract_img">
+              </div>
+            </el-tab-pane>
+            <el-tab-pane label="借款信息表" name="second">配置管理</el-tab-pane>
+            <el-tab-pane label="角色管理" name="third">还款付息确认表</el-tab-pane>
+            <el-tab-pane label="定时任务补偿" name="fourth">付款委托书</el-tab-pane>
+          </el-tabs>
+        </template>
+      </div>
+    </el-dialog>
+    <!--收款计划-->
+    <el-dialog
+      class="ContractPlan"
+      title="查看合同"
+      :visible.sync="ContractPlanBtn"
+      width="770px">
+      <div style="margin: 20px;">
+        <el-row>
+          <el-col :span="2">总借款额：</el-col>
+          <el-col :span="22">¥{{ContractPlanMsg.contract.price}}</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="2">用款时间：</el-col>
+          <el-col :span="6">{{ContractPlanMsg.contract.beginDate}}</el-col>
+          <el-col :span="2">还款方式：</el-col>
+          <el-col :span="6">{{ContractPlanMsg.contract.borrowType}}</el-col>
+          <el-col :span="3">借款利率(年化)：</el-col>
+          <el-col :span="5">{{ContractPlanMsg.contract.yearRate*10}}%</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="2">借款期限：</el-col>
+          <el-col :span="6">{{ContractPlanMsg.contract.yearLimit}}</el-col>
+          <el-col :span="2">还款期数：</el-col>
+          <el-col :span="6">共{{ContractPlanMsg.totalPeriods}}期</el-col>
+          <el-col :span="2">总还款额</el-col>
+          <el-col :span="6">¥{{ContractPlanMsg.totalPrice}}</el-col>
+        </el-row>
+      </div>
+      <div class="line_title">
+        <ul class="clearfix">
+          <li class="time">收款时间</li>
+          <li class="detail">明细</li>
+          <li class="get">已收</li>
+          <li class="state">收款状态</li>
+        </ul>
+      </div>
+      <div class="line_content" style="padding-bottom: 30px;">
+        <ul>
+          <li v-for="(item,index) in ContractPlanMsg.finance" class="clearfix">
+            <div class="time_content">{{item.repayDate}}</div>
+            <div class="detail_content">
+              <div>{{receiptMoney(item)}}</div>
+              <div>{{receiptMoney2(item)}}</div>
+            </div>
+            <div class="get_content">{{receiptMoney3(item)}}</div>
+            <div class="state_content">{{stateMsg(item)}}</div>
+          </li>
+        </ul>
+      </div>
+    </el-dialog>
+    <!--弹窗 end-->
+  </el-main>
+</template>
+
+<script>
+  export default {
+    name: "ShouldCollect",
+    data() {
+      return {
+        pickerOptions: '',
+        activeName: 'first',
+        totalRecord: '',//数据数量
+        currentPage: 1,
+        pageSize: 5,
+        totalRecord: 0,
+        allData: '',
+        listResult: '',//
+        searchMsg: {
+          minPrice: '',
+          maxPrice: '',
+          likeName: '',
+          time: ''
+        },
+        table: {
+          thead: [],
+          tbody: [
+            {
+              a1_name: "已收款",
+              a1_date_pruce: "green",
+              a2_date: "逾3天",
+              a2_date_color: "red",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元(共减免滞纳金100)",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "5200元 2017-12-12"
+            },
+            {
+              a1_name: "已收款",
+              a1_date_pruce: "green",
+              a2_date: "已到期",
+              a2_date_color: "yellow",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "5200元 2017-12-12"
+            }
+          ],
+          tfoot: [],
+          currentPage: 1
+        }, //表格数据
+        loading: false,
+        confirmReceiptBtn: false,// 确认收款弹框按钮
+        paymentDetailBtn: false, // 短信催收 -  查看合同详情
+        breaksMoneyBtn: false,
+        confirmReceiptInputBtn: false, // 确认收款 可编辑弹窗
+        paymentRejectBtn: false, // 收款驳回 可编辑
+        paymentDetailController: true, // 控制元素显示隐藏 (减免滞纳金 ,和恢复滞纳金这块)
+        waitBackBtn: false,  // 查看收支详情 确认收款
+        viewContractBtn: false, //查看合同  有借款协议
+        ContractPlanBtn: false, //
+        viewDetailData: {
+          financeBill: {
+            repayDate: '',
+            currDuration: '',
+            totalDuration: '',
+            principal: '',
+            interest: '', //利息
+            lateFee: '', //滞纳金
+            exemptLateFee: 0,//减免滞纳金
+            exemptLateFeeStatus: '',// 滞纳金减免状态 滞纳金减免状态:0否，1是
+            apartmentUser: '',//操作人
+            apartmentDate: '',//操作时间
+            exemptLateFeePeople: '',
+            exemptLateFeeDate: '',
+            planPrice: '',
+            lateFee: '',
+            exemptLateFee: '',
+            exemptLateFeeStatus: ''
+          },
+          contract: {
+            apartmentName: '',//借款人
+            apartmentPhone: '',//联系电话
+            no: '',//合同编号
+
+          }
+        },
+        formInline: {
+          user: "",
+          region: ""
+        },
+        ContractPlanMsg: {
+          totalPeriods: '',//总期数
+          finance: [],
+          contract: {
+            beginDate: '',//用款时间
+            yearRate: '',//年利率
+            yearLimit: '', //年限
+            price: '',//本金
+            borrowType: ''//用款方式
+          },
+          totalPrice: ''
+        },
+        //筛选的过滤信息
+        screening: {
+          areaValue: [], //城市/区域
+          area: [] //城市/区域
+        },
+
+        //表格信息
+        table: {
+          thead: [],
+          tbody: [
+            {
+              a1_name: "待确认",
+              a1_date_pruce: "yellow",
+              a2_date: "逾3天",
+              a2_date_color: "red",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元(共减免滞纳金100)",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "世纪源公寓公司 18486748483"
+            },
+            {
+              a1_name: "待收款",
+              a1_date_pruce: "blue",
+              a2_date: "已到期",
+              a2_date_color: "yellow",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "世纪源公寓公司 18486748483"
+            },
+            {
+              a1_name: "待收款",
+              a1_date_pruce: "blue",
+              a2_date: "5天后",
+              a2_date_color: "green",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "世纪源公寓公司 18486748483"
+            },
+            {
+              a1_name: "待收款",
+              a1_date_pruce: "blue",
+              a2_name: "2017-12-12",
+              a2_date_pruce: "XY20171129001",
+              a3_name: "52000元",
+              a3_date_pruce: "50000 / 1800 /200",
+              a4_name: "5 / 12",
+              a4_date_pruce: "世纪源公寓公司 18486748483"
+            }
+          ],
+          tfoot: [],
+          totalRecord: 0
+        }
+      };
+    },
+    created() {
+      this.fetchData(this.pageSize, this.currentPage);
+      this.confirmReceiptFn();
+    },
+    methods: {
+      fetchData(pageSize, pageNo, searchMsg) {
+        var _this = this
+        /*this.loading = true*/
+        this.loading = true
+        var dataOption = {
+          gcid: '0100099',
+          userid: 'ab0f10cd02094f7b9b82b82088742557',
+          token: 'e40f0b86-2ed6-4b62-8571-e63e1f23bbd3',
+          pageNo: pageNo,
+          pageSize: pageSize,
+          status: 0
+        }
+        if (searchMsg) {
+          dataOption = Object.assign({}, dataOption, searchMsg)
+        }
+        this.axios({
+          method: 'post',
+          url: this.$store.state.api.finance.alreadyCollect,
+          data: dataOption
+        }).then(function (response) {
+          _this.loading = false
+          _this.listResult = response.data.result;
+          _this.totalRecord = response.data.result.totalRecord;
+        })
+      },
+      getMoney(planPrice, lateFee, exemptLateFee, exemptLateFeeStatus) {
+        var money = 0;
+        if (exemptLateFeeStatus) {
+          money = Number(planPrice) + Number(lateFee) - Number(exemptLateFee);
+        } else {
+          money = Number(planPrice) + Number(lateFee);
+        }
+        return money
+      },
+      allMoney(item) {
+        var money = 0;
+        if (item.exemptLateFeeStatus) {
+          money = Number(item.planPrice) + Number(item.lateFee) - Number(item.exemptLateFee);
+        } else {
+          money = Number(item.planPrice) + Number(item.lateFee);
+        }
+        var str = ''
+        if (item.exemptLateFeeStatus) {
+          str = `(公减免滞纳金${item.exemptLateFee}元)`
+        }
+        return money + str;
+      },
+      receiptMoney(item) {
+        var money = 0;
+        if (item.exemptLateFeeStatus) {
+          money = Number(item.planPrice) + Number(item.lateFee) - Number(item.exemptLateFee);
+        } else {
+          money = Number(item.planPrice) + Number(item.lateFee);
+        }
+        return money += '元'
+      },
+      computedTime(item) {
+        item.num = false
+        var time = Number(item.numDate);
+        var str = '';
+        if (time > 0) {
+          item.num = 1
+          str += '逾' + time + '天'
+        } else if (time == 0) {
+          item.num = 2
+          str += '已到期'
+        } else if (time < 0 && Math.abs(time) < 5) {
+          str += Math.abs(time) + '天后'
+          item.num = 3
+        } else {
+          item.num = false
+        }
+        return str;
+      },
+      computedState(item) {
+        var status = Number(item.status)
+        var isRepay = Number(item.isRepay)
+        item.classNum = false
+        var str = ''
+        if (status == 5 && isRepay == 0) {
+          str = '待收款'
+          item.classNum = 1
+        } else if ((status == 2 && isRepay == 1) || (status == 0 && isRepay == 1)) {
+          item.classNum = 2
+          str = '待处理'
+        }
+        return str;
+      },
+      handleSizeChange(val) {
+        this.pageSize = val
+        this.fetchData(val, this.currentPage)
+      },
+      handleCurrentChange(val) {
+        this.currentPage = val
+        this.fetchData(this.pageSize, val)
+      },
+      showDetail(row, event, column) {
+        this.paymentDetailBtn = true
+        var {id, contractId} = row
+        var _this = this
+        this.axios({
+          method: 'post',
+          url: 'http://192.168.106.118:52002/v2/balance/finance_bill/exempt_late_fee_details',
+          data: {
+            id: id,
+            contractId: contractId
+          }
+        }).then(function (response) {
+          _this.viewDetailData = response.data.result
+        })
+      },
+      search() {
+        var _this = this
+        var searchMsgOptins = {
+          minPrice: this.searchMsg.minPrice,
+          maxPrice: this.searchMsg.maxPrice,
+          likeName: this.searchMsg.likeName,
+          startDate: this.searchMsg.time[0],
+          endDate: this.searchMsg.time[1],
+        }
+        this.fetchData(this.pageSize, this.currentPage, searchMsgOptins)
+      },
+      showContractPlan(item) {
+        var {gcid, contractId} = item
+        this.ContractPlanBtn = true
+        var _this = this
+        this.axios({
+          method: 'post',
+          url: 'http://192.168.106.118:52002/v2/balance/finance_bill/finance_periods',
+          data: {
+            gcid,
+            contractId
+          }
+        }).then(function (response) {
+          _this.ContractPlanMsg = response.data.result
+        })
+      },
+      itemStop(event) {
+      },
+      receiptMoney2(item) {
+        var str = ''
+        if (Number(item.interest) > 0) {
+          str = '含本金' + item.principal + '利息' + item.interest
+        } else {
+          str = '本金' + item.principal
+        }
+        return str;
+      },
+      receiptMoney3(item) {
+        var money = 0;
+        if (item.status != 5) {
+          if (item.exemptLateFeeStatus) {
+            money = Number(item.planPrice) + Number(item.lateFee) - Number(item.exemptLateFee);
+          } else {
+            money = Number(item.planPrice) + Number(item.lateFee);
+          }
+        }
+        return money;
+      },
+      stateMsg(item) {
+        var num = '';
+        var str = '';
+        num = Number(item.status)
+        if (num == 3 || num == 0) {
+          str = '待确认'
+        } else if (num == 1) {
+          str = '已还款'
+        } else if (num == 2) {
+          str = '还款失败'
+        } else {
+          str = '待收款'
+        }
+        return str;
+      },
+      stopPor() {
+      },
+      handleDo(item) {
+        console.log(item)
+        var num = this.screening.areaValue[item.$index]
+        if (num == 0) {
+          this.confirmReceiptBtn = true
+          this.confirmReceiptFn(item.row)
+        }
+      },
+      confirmReceiptFn(item) {
+        console.log(item)
+        /*var {}=item*/
+       /* this.axios({
+          method: 'post',
+          url: 'http://192.168.106.118:52002/v2/balance/finance_bill/get_affirm_message',              data: {
+
+          }
+        }).then(function (response) {
+          console.log(response.data)
+        })*/
+      }
+    }
+  };
+</script>
+
+<style scoped>
+  /*还款计划弹窗*/
+  /deep/ .ContractPlan .el-dialog__body {
+    padding: 0;
+  }
+
+  .clearfix:after {
+    content: '';
+    clear: both;
+    display: table;
+  }
+
+  .ContractPlan .line_title ul,
+  .ContractPlan .line_content ul {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ContractPlan .line_title ul {
+    background: #f2f6f7;
+    color: #404040;
+    font-size: 14px;
+    height: 44px;
+    line-height: 44px;
+  }
+
+  .ContractPlan .line_content li > div {
+    float: left;
+  }
+
+  .ContractPlan .line_content li {
+    position: relative;
+  }
+
+  .line_content li:nth-of-type(1)::before {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 40%;
+    background: #fff;
+    z-index: 10;
+    position: absolute;
+    left: 184px;
+  }
+
+  .ContractPlan li {
+    float: left;
+  }
+
+  .ContractPlan .time {
+    width: 100px;
+    text-align: right;
+  }
+
+  .ContractPlan .detail {
+    width: 290px;
+    text-indent: 188px;
+  }
+
+  .ContractPlan .get {
+    width: 160px;
+    text-indent: 86px;
+  }
+
+  .ContractPlan .state {
+    width: 180px;
+    text-indent: 80px;
+  }
+
+  .ContractPlan .detail_content {
+    position: relative;
+    padding-left: 100px;
+    margin-left: 188px;
+    width: 290px;
+    border-left: 1px solid #188ff0;
+  }
+
+  .ContractPlan .detail_content::before {
+    content: '';
+    width: 6px;
+    display: block;
+    height: 6px;
+    border-radius: 50%;
+    background: #188ff0;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 6px #fff;
+    z-index: 3;
+  }
+
+  .ContractPlan .time_content,
+  .ContractPlan .get_content,
+  .ContractPlan .state_content {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .ContractPlan .time_content {
+    width: 100px;
+    left: 0;
+    text-align: right;
+  }
+
+  .ContractPlan .time_content.active {
+    color: #188ff0;
+  }
+
+  .ContractPlan .get_content {
+    left: 475px;
+    width: 160px;
+  }
+
+  .ContractPlan .state_content {
+    width: 120px;
+    left: 635px;
+  }
+
+  /*弹框 end*/
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row.no-margin-bottom {
+    margin-bottom: 0px;
+  }
+
+  .el-row.search {
+    background: #fff;
+    padding: 20px;
+  }
+
+  .el-button--primary {
+    width: 100%;
+    background-color: #188ff0;
+    border-color: #188ff0;
+    border-radius: 0px;
+  }
+
+  /deep/ .el-input__inner {
+    border-radius: 0px;
+  }
+
+  /deep/ .el-button--primary span {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table tr {
+    background: #f7f7f7;
+  }
+
+  /deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+    background: #ffffff;
+  }
+
+  /deep/ .el-table th > .cell {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table thead tr {
+    background-color: #ffffff;
+    color: #2e3445;
+  }
+
+  /deep/ .el-pagination {
+    padding: 0px;
+    text-align: right;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li.active {
+    background-color: #188ff0;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li:hover {
+    color: #188ff0;
+  }
+
+  /deep/ .el-form-item {
+    margin: 0px;
+    border: 1px solid #dcdfe6;
+  }
+
+  /deep/ .el-form-item .el-input__inner {
+    border: 0px;
+  }
+
+  /deep/ .noMarginRight > .el-form-item__content {
+    width: 100%;
+  }
+
+  /deep/ .el-form--inline .el-form-item {
+    margin-right: 10px;
+  }
+
+  /deep/ .el-form--inline .el-form-item__label {
+    padding-left: 12px;
+    padding-right: 0px;
+  }
+
+  /deep/ .el-date-editor .el-range-input {
+    width: 60px;
+  }
+
+  /deep/ .el-date-editor .el-range-separator {
+    width: 30px;
+  }
+
+  .finance-state {
+    display: inline-block;
+    color: #fff;
+    width: 70px;
+    padding-right: 10px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+  }
+
+  .finance-state.yellow {
+    background: url(../../../static/image/icon_state_yellow.png) left top / 70px 30px no-repeat !important;
+  }
+
+  .finance-state.gray {
+    background: url(../../../static/image/icon_state_gray.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.black {
+    background: url(../../../static/image/icon_state_black.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.green {
+    background: url(../../../static/image/icon_state_green.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.blue {
+    background: url(../../../static/image/icon_state_blue.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.red {
+    background: url(../../../static/image/icon_state_red.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.orange {
+    background: url(../../../static/image/icon_state_orange.png) left top / 70px 30px no-repeat;
+  }
+
+  .repayment-state {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    margin-right: 10px;
+  }
+
+  .repayment-state.red {
+    background: #f32240;
+    color: #fff;
+  }
+
+  .repayment-state.yellow {
+    background: #f3af2a;
+    color: #fff;
+  }
+
+  .repayment-state.green {
+    background: #1dbd6d;
+    color: #fff;
+  }
+
+  /*弹框样式*/
+
+  /*确认收款弹窗*/
+  /deep/ .confirmReceipt .el-dialog__body {
+    padding: 0;
+  }
+
+  /deep/ .el-dialog__title {
+    color: #188ff0;
+    font-size: 16px;
+  }
+
+  /deep/ .confirmReceipt .item_name {
+    font-size: 14px;
+    color: #999;
+  }
+
+  /deep/ .confirmReceipt .item_content {
+    font-size: 14px;
+    color: #404040;
+  }
+
+  .confirmReceipt .cancel, .confirmReceipt .sure {
+    width: 100px;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: center;
+    color: #fff;
+    height: 40px;
+    line-height: 40px;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .confirmReceipt .cancel {
+    background-color: #f2082e;
+
+  }
+
+  .confirmReceipt .el-dialog__body {
+    padding: 0 !important;
+  }
+
+  .confirmReceipt .sure {
+    background-color: #188ff0;
+    margin-left: 20px;
+  }
+
+  .confirmReceipt_top {
+    padding: 24px 0 12px 25px;
+    border-bottom: 1px dashed #dfe4e6;
+  }
+
+  .confirmReceipt_middle {
+    padding: 29px 0 0 25px;
+  }
+
+  .confirmReceipt .image_box {
+    padding: 10px 0 33px 25px;
+  }
+
+  .confirmReceipt .image_box img {
+    width: 120px;
+    height: 160px;
+    margin-right: 20px;
+    display: inline-block;
+  }
+
+  .confirmReceipt .beizhu {
+    color: #999999;
+    font-size: 14px;
+    margin: 0;
+    padding-left: 25px;
+  }
+
+  /*短信催收 查看收支详情*/
+  .paymentDetail .title {
+    margin: 20px 0 30px 0;
+    color: #188ff0;
+    font-size: 14px;
+    border-left: 3px solid #188ff0;
+    padding-left: 7px;
+  }
+
+  .paymentDetail_top, .paymentDetail_middle, .paymentDetail_bot {
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #dfe4e6;
+  }
+
+  /*控制页面整体高度*/
+  .paymentDetail .h {
+    margin-bottom: 100px;
+  }
+
+  /deep/ .paymentDetail .dialog-footer div {
+    width: 80px;
+    height: 36px;
+    background-color: #188ff0;
+    border-radius: 2px;
+    color: #ffffff;
+    font-size: 16px;
+    line-height: 36px;
+    text-align: center;
+    position: relative;
+    right: 0;
+    margin-left: 587px;
+    cursor: pointer;
+  }
+
+  /deep/ .paymentDetail .el-dialog__footer {
+    height: 60px;
+    background: #f2f6f7;
+  }
+
+  /*驳回 减免滞纳金*/
+  /deep/ .breaksMoney .el-dialog__body {
+    padding: 0;
+  }
+
+  .breaksMoney .breakMoney_top {
+    height: 72px;
+    line-height: 72px;
+    padding-left: 25px;
+    border-bottom: 1px dashed #dfe4e6;;
+  }
+
+  .breaksMoney_text {
+    color: #999999;
+    font-size: 14px;
+  }
+
+  .breaksMoney_money {
+    color: #404040;
+    font-size: 20px;
+  }
+
+  .breaksMoney .money_num {
+    margin: 30px 0 9px 25px;
+    height: 34px;
+    width: 345px;
+    background: red;
+    position: relative;
+
+  }
+
+  .money_num label {
+    display: block;
+    position: absolute;
+    width: 68px;
+    height: 34px;
+    line-height: 34px;
+    left: 9px;
+  }
+
+  .money_num span {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .money_num input {
+    display: inline-block;
+    width: 345px;
+    top: 0;
+    left: 0;
+    height: 34px;
+    border: 1px solid #e6eced;
+    outline: none;
+    padding-left: 70px;
+  }
+
+  .breaksMoney .remake {
+    margin: 9px 0 0 25px;
+  }
+
+  .breaksMoney .remake textarea {
+    width: 497px;
+    height: 62px;
+    padding: 9px;
+    border: solid 1px #e6eced;
+    resize: none;
+    color: #404040;
+    font-size: 14px;
+  }
+
+  /deep/ .breaksMoney .el-dialog__footer {
+    margin: 31px 0 0 0;
+    padding-bottom: 41px;
+  }
+
+  /deep/ .breaksMoney .revertBtn {
+    width: 140px;
+    display: inline-block;
+    height: 40px;
+    line-height: 40px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    border: solid 2px #188ff0;
+    text-align: center;
+    color: #188ff0;
+    font-size: 16px;
+    vertical-align: top;
+  }
+
+  /deep/ .breaksMoney .sureBtn {
+    width: 100px;
+    height: 40px;
+    display: inline-block;
+    background-color: #188ff0;
+    border-radius: 5px;
+    line-height: 40px;
+    text-align: center;
+    vertical-align: top;
+    color: #ffffff;
+    margin: 0 12px 0 19px;
+  }
+
+  /* 1.确认收款弹窗  2. 收款驳回 (可编辑)*/
+  /deep/ .confirmReceiptInput .el-dialog__body,
+  /deep/ .paymentReject .el-dialog__body {
+    padding: 0 30px;
+  }
+
+  /deep/ .confirmReceiptInput .el-dialog__footer,
+  /deep/ .paymentReject .el-dialog__footer {
+    margin-top: 10px;
+    padding-bottom: 40px;
+  }
+
+  .confirmReceiptInput .text,
+  .paymentReject .text {
+    font-size: 16px;
+    color: #2e3445;
+  }
+
+  .confirmReceiptInput .textMsg,
+  .paymentReject .textMsg {
+    padding: 29px 0 14px 0;
+    color: #2e3445;
+    font-size: 16px;
+  }
+
+  .paymentReject .textMsg2 {
+    color: #f2082e;
+  }
+
+  .confirmReceiptInput .edit,
+  .paymentReject .edit {
+    width: 100%;
+    border: solid 1px #e8e8e8;
+    resize: none;
+    padding: 11px 0 0 14px;
+    color: #999999;
+    font-size: 14px;
+    height: 100px;
+  }
+
+  .confirmReceiptInput .sureBtn2,
+  .paymentReject .sureBtn2 {
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    margin-left: 310px;
+    text-align: center;
+    line-height: 40px;
+    color: #fff;
+  }
+
+  /*查看收支详情  确认收款*/
+  /deep/ .waitBack .el-row {
+    margin-bottom: 10px;
+  }
+
+  /deep/ .waitBack .el-dialog__body {
+    padding: 0;
+  }
+
+  /deep/ .waitBack .el-dialog__footer {
+    background: #f2f6f7;
+  }
+
+  /deep/ .waitBack .waitBack_item {
+    margin: 0 26px;
+    padding-bottom: 21px;
+    border-bottom: 1px dashed #dfe4e6;
+  }
+
+  .waitBack .item_title {
+    color: #188ff0;
+    padding-left: 8px;
+    font-size: 14px;
+    border-left: 3px solid #188ff0;
+    margin: 21px 0 29px 0;
+    font-weight: normal;
+  }
+
+  .waitBack .item_name {
+    color: #404040;
+    font-size: 14px;
+  }
+
+  .waitBack .item_content {
+    color: #999999;
+    font-size: 12px;
+  }
+
+  .waitBack .img_list {
+    overflow: auto;
+    margin-left: 26px;
+    padding: 0;
+  }
+
+  .waitBack .img_list li {
+    width: 100px;
+    height: 100px;
+    background-color: #dfe4e6;
+    float: left;
+    margin-right: 20px;
+  }
+
+  .waitBack .sureBox {
+    border: none;
+    padding-bottom: 4px;
+    margin-left: 25px;
+  }
+
+  .waitBack .sureGet {
+    width: 80px;
+    height: 36px;
+    background-color: #188ff0;
+    border-radius: 2px;
+    line-height: 36px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 16px;
+    margin-left: 592px;
+  }
+
+  /*查看合同 有合同书*/
+  /deep/ .viewContract .el-row {
+    margin-bottom: 0;
+  }
+
+  /deep/ .viewContract .el-dialog__body {
+    padding: 16px 25px;
+  }
+
+  .viewContract .el-col {
+    padding-bottom: 18px;
+  }
+
+  .viewContract .item_name {
+    color: #404040;
+    font-size: 14px;
+  }
+
+  .viewContract .item_content {
+    color: #999999;
+    font-size: 12px;
+  }
+
+  /deep/ .viewContract .el-tab-pane {
+    height: 400px;
+    overflow-y: auto;
+  }
+
+  .viewContract .el-tab-pane {
+    text-align: center;
+  }
+
+  .viewContract .contract_img {
+    width: 390px;
+    margin: 0 auto;
+    display: inline;
+  }
+
+  /deep/ .search .el-range-input {
+    width: 90px;
+  }
+
+  /deep/ .search .el-date-editor {
+    margin-left: 20px;
+  }
+
+  /deep/ .paymentDetail .el-button--primary {
+    width: 80px;
+  }
+
+</style>

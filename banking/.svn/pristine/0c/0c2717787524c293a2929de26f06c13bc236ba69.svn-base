@@ -1,0 +1,179 @@
+<template>
+  <div class="corporateNotice">
+    <div class="corporateNotice_top">
+      <el-col :span="24">
+        <el-form :inline="true"  style="display:flex;;" :model="formData">
+          <el-form-item class="noticeType">
+            <el-select v-model="formData.noticeTypeValue" placeholder="公告类型">
+              <el-option
+                v-for="item in formData.noticeTypeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="formData.userValue" placeholder="部门/人员">
+              <el-option
+                v-for="item in formData.departmentUserOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="dateBox">
+            <span class="data_text">查询周期</span>
+            <el-date-picker
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input  placeholder="标题"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input  placeholder="内容"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </div>
+    <div class="tableBox">
+      <table-list :tableOption="tableOption" class="corporateNoticeTable"></table-list>
+    </div>
+  </div>
+</template>
+
+<script>
+  import tableList from "@/components/public/TableList";
+  export default {
+    name: "RoleManger",
+    data() {
+      return {
+        tableOption: {
+          doWidth:140,
+          thead: [
+            {
+              prop: "type",
+              label: "公告类型",
+              minWidth:120
+            },
+            {
+              prop: "title",
+              label: "公告标题",
+              minWidth:440
+            },
+            {
+              prop: "time",
+              label: "发布时间",
+              minWidth:200
+            },
+            {
+              prop: "user",
+              label: "发布人",
+              minWidth:141
+            }
+          ],
+          data: [
+            {
+              type: "通知",
+              title: "顾客是最好的老师 , 同行是最好的榜样。",
+              time: "2017.2.13  18:34",
+              user: "高雨婷"
+            },
+            {
+              type: "节日",
+              title: "十一放假安排",
+              time: "2017.2.13  18:34",
+              user: "李阳"
+            }
+          ],
+          controButton: [
+            {
+              name: "编辑",
+              event: "@click"
+            },
+            {
+              name: "删除",
+              event: "@click"
+            }
+          ]
+        },
+        // 搜索表单数据
+        formData:{
+          noticeTypeOptions: [{
+            value: '选项1',
+            label: '通知'
+          }, {
+            value: '选项2',
+            label: '节日'
+          }],
+          departmentUserOptions: [{
+            value: '选项1',
+            label: '部门1'
+          }, {
+            value: '选项2',
+            label: '部门2'
+          }],
+          noticeTypeValue:'', //公告类型
+          userValue: ''    // 部门 人员
+        }
+      };
+    },
+    mounted() {},
+    components: {
+      tableList
+    }
+  };
+</script>
+
+<style scoped>
+  /deep/.corporateNotice th,
+  /deep/.corporateNotice td{
+    text-align: center;
+  }
+  /deep/.corporateNoticeTable .el-table__body-wrapper tr td:nth-of-type(2){
+    color: #188ff0;
+  }
+  /deep/ .corporateNotice_top .el-col{
+    padding-top: 18px;
+  }
+  .corporateNotice_top {
+    background: #fff;
+    height: 76px;
+    margin-bottom: 30px;
+  }
+  .noMarginRight {
+    padding-right: 10px;
+  }
+ .dateBox {
+   position: relative;
+ }
+  .dateBox .data_text{
+    position: absolute;
+    z-index: 10;
+    left: 6px;
+    font-size: 14px;
+    color: #585858;
+  }
+  .corporateNotice_top .noticeType{
+    padding-left: 10px;
+  }
+ /deep/.corporateNotice .tableBox {
+   overflow: auto;
+   min-height: calc(100vh - 200px);
+   border:20px solid #fff ;
+   box-sizing: border-box;
+   box-shadow: 0 0 4px  rgba(0,0,0,.1);
+  }
+  /deep/.corporateNotice .tableBox .el-table{
+  }
+
+</style>

@@ -1,0 +1,878 @@
+<template>
+  <el-container v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+
+    <!-- 头部 - 二级路由 -->
+    <el-header class="bg-white">
+      <cms-header :tabs="tabs"></cms-header>
+    </el-header>
+
+    <!-- 主体 - 内容 -->
+    <el-main>
+      <el-row :gutter="20">
+
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div>
+              <span class="text">放款总额</span><i>¥</i><span class="money" v-text="workSpacetopData.principal.loan?workSpacetopData.principal.loan:0"></span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money" v-text="workSpacetopData.principal.count?workSpacetopData.principal.count:0"></span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-bule">
+            <div>
+              <span class="text">已收款额</span><i>¥</i><span class="money" v-text="workSpacetopData.realprice.received?workSpacetopData.realprice.received:0"></span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money" v-text="workSpacetopData.realprice.count?workSpacetopData.realprice.count:0"></span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div>
+              <span class="text">逾期总额</span><i>¥</i><span class="money" v-text="workSpacetopData.planprice.overdue?workSpacetopData.planprice.overdue:0"></span>
+            </div>
+            <div>
+              <span class="number">笔数</span><i>¥</i><span class="money" v-text="workSpacetopData.planprice.count?workSpacetopData.planprice.count:0"></span>
+            </div>
+          </el-card>
+
+        </el-col>
+        <el-col :span="6">
+
+          <el-card class="box-card bg-orange">
+            <div class="total">
+              <span class="text">已收利息</span><i>¥</i><span class="money" v-text="workSpacetopData.interest.interest?workSpacetopData.interest.interest:0"></span>
+            </div>
+          </el-card>
+
+        </el-col>
+
+      </el-row>
+      <el-row :gutter="20">
+
+        <el-col :span="12">
+
+          <el-card class="msgBox">
+            <h1 class="title">待处理</h1>
+            <el-row>
+              <el-col :span="12" class="box-card-affair center">
+                <div class="examine contentBox clearfix">
+                  <div class="iconBox  edit1">
+
+                  </div>
+                  <div >
+                    <p class="number" v-text="workSpacewaiting.waitborrowapplycheck"></p>
+                    <p class="text">待审批申请</p>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12" class="box-card-affair">
+                <div class="audit contentBox clearfix">
+                  <div class="iconBox edit2">
+
+                  </div>
+                  <div>
+                    <p class="number" v-text="workSpacewaiting.waitcontractcheck"></p>
+                    <p class="text">待审核合同</p>
+                  </div>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12" class="">
+                <div class="contentBox clearfix">
+                  <div class="iconBox edit3">
+
+                  </div>
+                  <div>
+                    <p class="number" v-text="workSpacewaiting.waitloan"></p>
+                    <p class="text">待打款合同</p>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12" class="box-card-affair">
+                <div class="contentBox clearfix">
+                  <div class="iconBox edit4">
+
+                  </div>
+                  <div>
+                    <p class="number" v-text="workSpacewaiting.waitreceived"></p>
+                    <p class="text">贷催收合同</p>
+                  </div>
+                </div>
+              </el-col>
+            </el-row>
+          </el-card>
+
+        </el-col>
+        <el-col :span="12">
+
+          <el-card class="msgBox msgBox2">
+            <h1 class="title">公司公告</h1>
+            <ul class="noticeList" style="margin:0px;">
+              <li v-for="item of companyNoticeList" :key="item.id" @click="openDetail(item.id)"><span class="noticeType">[{{item.noticeType}}]</span> {{item.title}}</li>
+            </ul>
+            <div class="notice-more">
+              更多
+            </div>
+          </el-card>
+        </el-col>
+
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+           <el-card class="msgBox" style="height:auto;">
+             <div class="datemonth-con">
+               <div class="datemonth-tips"></div>
+               <div class="datemonth">
+                <el-date-picker
+                  type="month"
+                  size="small"
+                  :editable="false"
+                  :clearable="false"
+                  :format="'yyyy-MM'"
+                  :value-format="'yyyy-MM'"
+                  v-model="screen.startTime"
+                  placeholder="开始月份"
+                  @change="startChange">
+                </el-date-picker>
+                <span class="datemonth-to">—</span>
+                <el-date-picker
+                  type="month"
+                  size="small"
+                  :editable="false"
+                  :clearable="false"
+                  :format="'yyyy-MM'"
+                  :value-format="'yyyy-MM'"
+                  v-model="screen.endTime"
+                  placeholder="结束月份"
+                  @change="endChange">
+                </el-date-picker>
+               </div>
+             </div>
+             <div id="myChart" :style="{width:'100%',height:'40vw'}"></div>
+           </el-card>
+        </el-col>
+      </el-row>
+    </el-main>
+    <el-dialog
+      title="公共详情"
+      width="70%"
+      :visible="dialog.detail"
+      :before-close="closeDetail">
+      <el-row v-loading="loading.detail" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <h1 v-text="dialog.detail_msg.title" class="detail-title"></h1>
+          <time v-text="dialog.detail_msg.ct" class="detail-date"></time>
+          <div v-html="dialog.detail_msg.content" class="detail-content"></div>
+          <div class="detail-btns">
+            <a v-bind:class="{'active':pieceIndex>0}" @click="previous">&lt; 上一篇</a>
+            <a v-bind:class="{'active':pieceIndex<(companyNoticeList.length-1)}" @click="next">下一篇 &gt;</a>
+          </div>
+        </el-col>
+      </el-row>
+    </el-dialog>
+  </el-container>
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+import tool from "../../static/js/tool.js";
+export default {
+  name: "home",
+  data() {
+    return {
+      tabs: [{ name: "工作台", path: "/home" }],
+      loading: {
+        all: true, //整页的loading
+        detail: true //查看详情弹出框的loading
+      },
+
+      //选择篇的索引
+      pieceIndex: -1,
+
+      //弹出框信息
+      dialog: {
+        detail: false, //是否显示，查看详情弹出框
+        detail_msg: {} //详情弹出框内容
+      },
+
+      //顶部统计数据
+      workSpacetopData: {
+        principal: {
+          //贷款总额
+          loan: 0,
+          count: 0
+        },
+        realprice: {
+          received: 0,
+          count: 0
+        }, //已收总额
+        planprice: {
+          overdue: 0,
+          count: 0
+        }, //逾期待还
+        interest: {
+          interest: 0,
+          count: 0
+        } //获取利息
+      },
+
+      //筛选的过滤信息
+      screen: {
+        startTime: "",
+        endTime: ""
+      },
+
+      companyNoticeList: [], //企业公告
+
+      //待处理数据
+      workSpacewaiting: {
+        waitborrowapplycheck: 0, //待审批申请
+        waitcontractcheck: 0, //待审核合同
+        waitloan: 0, //待打款合同
+        waitreceived: 0 //待催收合同
+      },
+
+      workSpacechartData: [],
+
+      //echarts
+      myChart: {}
+    };
+  },
+  methods: {
+    /**-----获取企业公告----- */
+    getCompanyNotice() {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.setting.companyNotice.getList,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          pageNo: 1,
+          pageSize: 4
+        }
+      });
+    },
+
+    /**-----获取顶部统计数据----- */
+    getWorkSpacetopData() {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.financeBill.getWorkSpacetopData,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          pageNo: 1,
+          pageSize: 4
+        }
+      });
+    },
+
+    /**-----获取待处理数据----- */
+    getWorkSpacewaitingData() {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.financeBill.getWorkSpacewaitingData,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          startTime: this.screen.startTime,
+          endTime: this.screen.endTime
+        }
+      });
+    },
+
+    /**-----获取利息数据----- */
+    getWorkSpacechartData() {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.financeBill.getWorkSpacechartData,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          starttime: this.screen.startTime,
+          endtime: this.screen.endTime
+        }
+      });
+    },
+
+    /**-----页面初始化----- */
+    async init() {
+      const self = this;
+      self.loading.all = true;
+      const { data: companyNotice } = await self.getCompanyNotice();
+      if (companyNotice.status.code == 200) {
+        self.companyNoticeList = companyNotice.result.list.map(item => {
+          if (item.noticeType == 10) {
+            item.noticeType = "通知";
+          } else if (item.noticeType == 20) {
+            item.noticeType = "假期";
+          } else if (item.noticeType == 30) {
+            item.noticeType = "奖励";
+          } else if (item.noticeType == 40) {
+            item.noticeType = "惩罚";
+          }
+          return item;
+        });
+      }
+      const { data: workSpacewaiting } = await self.getWorkSpacewaitingData();
+      if (workSpacewaiting.status.code == 200) {
+        self.workSpacewaiting = workSpacewaiting.result;
+      }
+      const { data: workSpacetopData } = await self.getWorkSpacetopData();
+      if (workSpacetopData.status.code == 200) {
+        self.workSpacetopData = workSpacetopData.result;
+      }
+      self.loading.all = false;
+    },
+
+    async currentChange(currentPage) {
+      const self = this;
+      const { data: workSpacechartData } = await self.getWorkSpacechartData();
+      if (workSpacechartData.status.code == 200) {
+        const { list } = workSpacechartData.result;
+        const date = [];
+        const data = [];
+        list.forEach(item => {
+          date.push(item.date);
+          data.push(item.interest);
+        });
+        self.renderEcharts(date, data);
+      }
+    },
+
+    /**-----显示，查看详情弹出框----- */
+    openDetail(id) {
+      this.dialog.detail = true;
+      this.getDetail(id);
+    },
+    /**-----隐藏，查看详情弹出框----- */
+    closeDetail() {
+      this.dialog.detail = false;
+    },
+
+    /**-----查询详情数据----- */
+    getDetail(id) {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      //开启loading
+      self.loading.detail = true;
+      self.companyNoticeList.forEach((item, i) => {
+        if (item.id == id) {
+          self.pieceIndex = i;
+        }
+      });
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.setting.companyNotice.get,
+          data: {
+            gcid: "0100099",
+            userid: userid,
+            params: {
+              id: id
+            }
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading.detail = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.dialog.detail_msg = data.result;
+          }
+        })
+        .catch(error => {
+          self.loading.detail = false;
+        });
+    },
+
+    /**-----上一篇----- */
+    previous() {
+      const self = this;
+      self.pieceIndex = self.pieceIndex - 1;
+      const data = self.companyNoticeList[self.pieceIndex];
+      if (data) {
+        self.dialog.detail = true;
+        self.getDetail(data.id);
+      }
+    },
+
+    /**-----下一篇----- */
+    next() {
+      const self = this;
+      self.pieceIndex = self.pieceIndex + 1;
+      const data = self.companyNoticeList[self.pieceIndex];
+      if (data) {
+        self.dialog.detail = true;
+        self.getDetail(data.id);
+      }
+    },
+
+    /**-----开始月份改变时触发----- */
+    async startChange() {
+      const self = this;
+      if (!self.screen.startTime) {
+        return;
+      }
+      if (!self.screen.endTime) {
+        return;
+      }
+      const startDate = new Date(self.screen.startTime);
+      const endDate = new Date(self.screen.endTime);
+      if (startDate > endDate) {
+        self.screen.startTime = "";
+        self.$message.error("开始月份只能小于等于结束月份！");
+        return;
+      }
+      const startDateNew = new Date(
+        startDate.getFullYear() + 1,
+        startDate.getMonth()
+      );
+      if (startDateNew < endDate) {
+        self.screen.startTime = "";
+        self.$message.error("月份的范围只能在1年以内！");
+        return;
+      }
+      self.myChart.showLoading();
+      const { data: workSpacechartData } = await self.getWorkSpacechartData();
+      if (workSpacechartData.status.code == 200) {
+        const { list } = workSpacechartData.result;
+        const date = [];
+        const data = [];
+        list.forEach(item => {
+          date.push(
+            item.date +
+              (self.screen.startTime == self.screen.endTime ? "号" : "月")
+          );
+          data.push(item.interest);
+        });
+        self.renderEcharts(date, data);
+      }
+      self.myChart.hideLoading();
+    },
+
+    /**-----结束月份改变时触发----- */
+    async endChange() {
+      const self = this;
+      if (!self.screen.startTime) {
+        return;
+      }
+      if (!self.screen.endTime) {
+        return;
+      }
+      const startDate = new Date(self.screen.startTime);
+      const endDate = new Date(self.screen.endTime);
+      if (startDate > endDate) {
+        self.screen.endTime = "";
+        self.$message.error("开始月份只能小于等于结束月份！");
+        return;
+      }
+      const startDateNew = new Date(
+        startDate.getFullYear() + 1,
+        startDate.getMonth()
+      );
+      if (startDateNew < endDate) {
+        self.screen.endTime = "";
+        self.$message.error("月份的范围只能在1年以内！");
+        return;
+      }
+      self.myChart.showLoading();
+      const { data: workSpacechartData } = await self.getWorkSpacechartData();
+      if (workSpacechartData.status.code == 200) {
+        const { list } = workSpacechartData.result;
+        const date = [];
+        const data = [];
+        list.forEach(item => {
+          date.push(
+            item.date +
+              (self.screen.startTime == self.screen.endTime ? "号" : "月")
+          );
+          data.push(item.interest);
+        });
+        self.renderEcharts(date, data);
+      }
+      self.myChart.hideLoading();
+    },
+
+    /**-----初始化echarts----- */
+    initEcharts() {
+      const self = this;
+      self.myChart = self.$echarts.init(document.getElementById("myChart"));
+      self.myChart.setOption({
+        tooltip: {
+          trigger: "axis",
+          position: function(pt) {
+            return [pt[0], "10%"];
+          }
+        },
+        title: {
+          text: "利息"
+        },
+        xAxis: {
+          type: "category",
+          boundaryGap: false
+        },
+        yAxis: {
+          type: "value",
+          boundaryGap: [0, "100%"]
+        },
+        series: [
+          {
+            name: "利息",
+            type: "line",
+            smooth: true,
+            symbol: "none",
+            sampling: "average",
+            itemStyle: {
+              normal: {
+                color: "#3e83f1"
+              }
+            },
+            areaStyle: {
+              normal: {
+                color: new self.$echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  {
+                    offset: 1,
+                    color: "#ecf3fd"
+                  }
+                ])
+              }
+            }
+          }
+        ]
+      });
+    },
+
+    /**-----重新绘制echarts----- */
+    renderEcharts(date, data) {
+      const self = this;
+      if (self.myChart) {
+        self.myChart.setOption({
+          xAxis: {
+            data: date
+          },
+          series: [
+            {
+              data: data
+            }
+          ]
+        });
+      }
+    }
+  },
+  components: {
+    cmsHeader
+  },
+  created() {
+    this.init();
+  },
+  async mounted() {
+    const self = this;
+    self.initEcharts();
+    const { data: workSpacechartData } = await self.getWorkSpacechartData();
+    if (workSpacechartData.status.code == 200) {
+      const { list } = workSpacechartData.result;
+      const date = [];
+      const data = [];
+      list.forEach(item => {
+        date.push(
+          item.date +
+            (self.screen.startTime == self.screen.endTime ? "号" : "月")
+        );
+        data.push(item.interest);
+      });
+      self.renderEcharts(date, data);
+    }
+  }
+};
+</script>
+<style scoped>
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .el-date-editor.el-input {
+  width: 100px;
+}
+/deep/ .el-input--suffix .el-input__inner {
+  padding-right: 0px;
+  border: 0px;
+}
+.el-main {
+  background: #ecf0f4;
+}
+
+.header {
+  background: #fff;
+}
+
+.el-row {
+  margin-bottom: 20px;
+}
+
+.el-row:last-child {
+  margin-bottom: 0px;
+}
+
+.box-card {
+  border-radius: 3px;
+  position: relative;
+  height: 120px;
+  box-sizing: border-box;
+}
+
+.box-card div:nth-of-type(1) {
+  padding: 3px 0;
+}
+
+.box-card div:nth-of-type(2) {
+  padding-top: 6px;
+}
+
+.box-card .number {
+  width: 47px;
+  display: inline-block;
+  text-align: right;
+  color: #999;
+}
+
+.box-card .text {
+  color: #999999;
+}
+
+.box-card .money {
+  font-size: 26px;
+  color: #3e83f1;
+}
+
+.box-card i {
+  display: inline-block;
+  font-style: normal;
+  font-size: 12px;
+  color: #3e83f1;
+  padding: 0 4px 0 13px;
+}
+
+.box-card .total {
+  line-height: 70px;
+}
+
+.msgBox {
+  position: relative;
+  height: 250px;
+  box-sizing: border-box;
+  padding: 30px 0;
+  background: #fbfbfc;
+}
+.msgBox2 {
+  padding-top: 10px;
+}
+.msgBox .title {
+  position: absolute;
+  background: #188ff0;
+  width: 90px;
+  font-size: 14px;
+  color: #fff;
+  text-align: center;
+  height: 26px;
+  line-height: 26px;
+  border-radius: 0 0 10px 10px;
+  top: 0;
+  left: 50%;
+  margin-left: -45px;
+}
+
+.msgBox .contentBox {
+  width: 190px;
+  height: 78px;
+  margin-left: 20px;
+}
+
+.contentBox > div {
+  float: left;
+}
+
+.contentBox .iconBox {
+  width: 74px;
+  height: 78px;
+  border-radius: 10px;
+  margin-right: 15px;
+}
+
+.contentBox p {
+  margin: 0;
+}
+
+.contentBox .number {
+  font-size: 22px;
+  color: #404040;
+  margin-top: 14px;
+}
+
+.contentBox .text {
+  font-size: 14px;
+  color: #999;
+}
+
+.contentBox .edit1 {
+  background: #3099e3 url("../assets/image/edit_icon1.png") no-repeat 19px 18px;
+}
+
+.contentBox .edit2 {
+  background: transparent url("../assets/image/edit_icon2.png") no-repeat 19px
+    18px;
+}
+
+.contentBox .edit3 {
+  background: transparent url("../assets/image/edit_icon3.png") no-repeat 19px
+    18px;
+}
+
+.contentBox .edit4 {
+  background: transparent url("../assets/image/edit_icon4.png") no-repeat 19px
+    18px;
+}
+
+.msgBox .examine {
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.clearfix:after,
+.clearfix:before {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.clearfix {
+  zoom: 1;
+}
+
+.fl {
+  float: left;
+}
+
+.noticeList {
+  padding: 0;
+}
+.noticeList li {
+  font-size: 14px;
+  height: 45px;
+  line-height: 45px;
+  border-bottom: 1px dashed #ccc;
+  cursor: pointer;
+}
+.noticeList li:last-child {
+  border-bottom: 0px;
+}
+
+.noticeList li .noticeType {
+  color: #188ff0;
+  font-size: 14px;
+}
+.noticeList li:before {
+  content: "";
+  background: #188ff0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+.notice-more {
+  font-size: 14px;
+  color: #188ff0;
+  text-align: right;
+  cursor: pointer;
+}
+
+.detail-title {
+  font-size: 24px;
+  text-align: center;
+}
+.detail-date {
+  font-size: 14px;
+  line-height: 50px;
+  text-align: center;
+  display: block;
+  position: relative;
+}
+.detail-date::after {
+  position: absolute;
+  display: block;
+  content: "";
+  width: 40px;
+  bottom: 0px;
+  height: 3px;
+  left: 50%;
+  margin-left: -20px;
+  background: #188ff0;
+}
+.detail-content {
+  width: 80%;
+  margin: 0px auto;
+  padding: 30px 0px;
+  color: #666666;
+}
+.detail-btns {
+  font-size: 20px;
+  text-align: right;
+  color: #666666;
+}
+.detail-btns a {
+  margin-right: 30px;
+}
+.detail-btns a:last-child {
+  margin-left: 0px;
+}
+.detail-btns a.active {
+  color: #188ff0;
+  cursor: pointer;
+}
+
+.datemonth-con {
+  overflow: hidden;
+  height: 54px;
+}
+.datemonth {
+  float: right;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 5% / 50%;
+  padding: 0 5px;
+}
+.datemonth-tips {
+  float: left;
+  line-height: 34px;
+}
+.datemonth-to {
+  color: #999999;
+}
+</style>

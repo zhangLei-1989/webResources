@@ -1,0 +1,256 @@
+<template>
+	<el-main v-loading="loading">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.minPrice" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.maxPrice" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <span>用款时间</span>
+            <el-date-picker
+              type="daterange"
+              v-model="formInline.date"
+              value-format="yyyy-MM-dd"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.likeName" placeholder="借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="getBorrowApplyList">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe>
+          <el-table-column
+            prop="status"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state">已生成合同</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="借款人/金额/用款时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.apartmentPerson }}</p>
+                <p>{{ scope.row.expectPrice + '元 '+ scope.row.expectDate }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="hosueAddress"
+            label="房源信息">
+          </el-table-column>
+          <el-table-column
+            label="类别/还款方式/申请时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.borrowType + ' 每月等额' }}</p>
+                <p>{{ scope.row.ct }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            prop="handle"
+            label="操作"
+            width="130">
+            <template slot-scope="scope">
+              <el-select v-model="screening.areaValue" placeholder="生成合同" style="width:100%;">
+                <el-option
+                  v-for="item of screening.area"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="table.currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+	</el-main>
+</template>
+
+<script>
+export default {
+  name: "AlreadyAdopted",
+  data() {
+    return {
+      loading: false,
+
+
+      //筛选的过滤信息
+      currentPage: 1, //当前页
+      pageSize: 10, //每页条数
+      totalRecord: 0 ,//总条数
+
+      formInline: {
+        minPrice:'',//最低金额
+        maxPrice:'',//最大金额
+        date:'', // 时间
+        likeName:''//用款人
+      },
+
+      //表格信息
+      table: {
+        tbody: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  },
+  methods: {
+    /**-----查询列表数据----- */
+    getBorrowApplyList() {
+      const self = this;
+      //开启loading
+      self.loading = true;
+      self
+        .axios({
+          method: "post",
+          url: this.$store.state.api.borrowApply.getList,
+          data: {
+            pageNo: self.table.currentPage,
+            pageSize: self.table.pageSize,
+            status: 3 //0待审批 1已通过 2已驳回 3生成合同
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading = false;
+          const { data } = response;
+          console.log(data);
+          if (data.status.code == 200) {
+            self.table.tbody = [];
+            //动态添加数据（渲染列表页面）
+            data.result.list.forEach(item => {
+              self.table.tbody.push(item);
+            });
+            self.table.totalRecord = data.result.totalRecord;
+          }
+        })
+        .catch(error => {
+          self.loading = false;
+        });
+    },
+
+    /**-----当前页改变时调用----- */
+    currentChange(currentPage) {
+      const self = this;
+      self.table.currentPage = currentPage;
+      self.getBorrowApplyList();
+    },
+
+    /**-----每页条目改变时调用----- */
+    sizeChange(pageSize) {
+      const self = this;
+      self.table.currentPage = 1;
+      self.table.pageSize = pageSize;
+      self.getBorrowApplyList();
+    }
+  },
+  created() {
+    var self = this;
+    self.getBorrowApplyList();
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 100px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_green.png) left top no-repeat;
+  background-size: 100px 30px;
+}
+</style>

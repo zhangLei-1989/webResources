@@ -1,0 +1,38 @@
+//服务器地址
+const server_address = 'http://192.168.100.11:52001'
+
+//服务器api地址
+const api = {
+
+    //接口地址
+    setting: {  //系统设置
+        login: "/v2/jjr_user_login/pc_login",  //登录
+        get_list: "/v2/sys/department/get_list"  //部门列表
+    },
+    borrow_apply: {  //审批
+        get_borrowApplyList: "/v2/contract/borrow_apply/get_borrowApplyList",  //1.待审批列表 2.已生成合同
+        get_borrowApply_DoneList: "/v2/contract/borrow_apply/get_borrowApply_DoneList",  //已通过列表
+        get_borrowApply_BreakList: "/v2/contract/borrow_apply/get_borrowApply_BreakList"  //已驳回列表
+    }
+
+}
+
+//自动给接口地址添加域名
+const autoAddServerAddress = function (obj) {
+
+    const result = Object.create(null)
+
+    for (let key in obj) {
+
+        if (typeof obj[key] == 'object') {
+            result[key] = autoAddServerAddress(obj[key])
+        } else {
+            result[key] = server_address + obj[key]
+        }
+
+    }
+    return result
+
+}
+
+export default autoAddServerAddress(api)

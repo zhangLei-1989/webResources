@@ -1,0 +1,618 @@
+<template>
+  <el-main v-loading="loading" element-loading-background="rgba(0, 0, 0, 0)">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="searchMsg.minPrice" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="searchMsg.maxPrice" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <span>实收时间</span>
+            <el-date-picker
+              v-model="searchMsg.date"
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="yyyy-MM-dd"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="searchMsg.likeName" placeholder="合同编号 / 借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="search">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+    <el-table :data="table.tbody" stripe>
+      <el-table-column
+        prop="a1"
+        label="状态">
+        <template slot-scope="scope">
+          <span class="finance-state scope.row.a1_date_pruce green">已收款</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a2"
+        label="应收时间 / 合同编码">
+        <template slot-scope="scope">
+          <p>{{scope.row.repayDate|date}}</p>
+          <p style="color:#188ff0;">{{scope.row.contractNo}}</p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a3"
+        label="应收金额(本金 / 利息 / 滞纳金)">
+        <template slot-scope="scope">
+          <p>{{allMoney(scope.row)}}</p>
+          <p>{{scope.row.planPrice}}/ {{scope.row.interest}} / {{ scope.row.lateFee }} </p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="a4"
+        label="期数 / 总期数 / 收款金额 / 收款时间">
+        <template slot-scope="scope">
+          <p style="color:#188ff0;">{{ scope.row.currDuration}}/{{ scope.row.totalDuration}}</p>
+          <p>{{receiptMoney(scope.row)}} {{scope.row.confirmTime|date}}</p>
+        </template>
+      </el-table-column>
+      <el-table-column
+        fixed="right"
+        prop="handle"
+        label="操作"
+        width="130">
+        <template slot-scope="scope">
+          <el-button plain class="rejectBtn" @click="back(scope.row)">驳回</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="currentPage"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <!--驳回弹窗-->
+    <el-dialog
+      title="驳回"
+      width="450px"
+      class="paymentReject"
+      :visible.sync="paymentRejectOption.btn">
+      <div class="textMsg textMsg2">确认要驳回该笔款项?</div>
+      <textarea class="edit" placeholder="输入原因(可选 )" v-model="paymentRejectOption.msg"></textarea>
+      <div class="dialog-footer" slot="footer">
+        <el-button type="primary" @click="rejectOptionBack"
+                   class="sureBtn2">确 定
+        </el-button>
+      </div>
+    </el-dialog>
+    <!-- 查看收支详情  确认收款 -->
+    <el-dialog
+      class="waitBack"
+      title="查看收支详情"
+      width="700px"
+      :visible.sync="waitBackBtn">
+      <div class="waitBack_item">
+        <h2 class="item_title">基本信息</h2>
+        <el-row>
+          <el-col :span="3" class="item_name">本期应收</el-col>
+          <el-col :span="5" class="item_content"> 50200</el-col>
+          <el-col :span="3" class="item_name">应收时间</el-col>
+          <el-col :span="13" class="item_content">2017-12-12</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">本金</el-col>
+          <el-col :span="5" class="item_content"> 50000</el-col>
+          <el-col :span="3" class="item_name">利息</el-col>
+          <el-col :span="5" class="item_content">100</el-col>
+          <el-col :span="3" class="item_name">滞纳金</el-col>
+          <el-col :span="5" class="item_content">100</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认状态</el-col>
+          <el-col :span="5" class="item_content">驳回</el-col>
+          <el-col :span="3" class="item_name">联系电话</el-col>
+          <el-col :span="5" class="item_content">18938473758"</el-col>
+          <el-col :span="3" class="item_name">合同编号</el-col>
+          <el-col :span="5" class="item_content">32623772328</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3">借款人</el-col>
+          <el-col :span="21">xxxx公司</el-col>
+        </el-row>
+      </div>
+      <div class="waitBack_item sureBox">
+        <h2 class="item_title">确认收款</h2>
+        <el-row>
+          <el-col :span="3" class="item_name">本期实收</el-col>
+          <el-col :span="5" class="item_content">50200</el-col>
+          <el-col :span="3" class="item_name">实收时间</el-col>
+          <el-col :span="13" class="item_content">2017-12-12</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认人</el-col>
+          <el-col :span="5" class="item_content">高雨婷</el-col>
+          <el-col :span="3" class="item_name">确认时间</el-col>
+          <el-col :span="5" class="item_content">2017-12-12 08:42:12</el-col>
+          <el-col :span="3" class="item_name">确认状态</el-col>
+          <el-col :span="5" class="item_content">驳回</el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="3" class="item_name">确认备注</el-col>
+          <el-col :span="21" class="item_content">收据不清晰</el-col>
+        </el-row>
+      </div>
+      <ul class="img_list">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+      </ul>
+      <div class="dialog-footer" slot="footer">
+        <div class="sureGet">驳回</div>
+      </div>
+    </el-dialog>
+  </el-main>
+</template>
+
+<script>
+  export default {
+    name: "AlreadyCollect",
+    data() {
+      return {
+        searchMsgbtn: false,
+        totalRecord: 0,//数据总条数
+        searchMsg: {
+          minPrice: '',
+          maxPrice: '',
+          date: '',
+          likeName: ''
+        },
+        paymentRejectOption: {
+          btn: false, //驳回弹窗按钮
+          msg: '', // 驳回信息
+          currentItem: ''// 当前驳回条数
+        },
+        loading: false,
+        waitBackBtn: false,  // 查看收支详情 驳回
+        formInline: {
+          user: "",
+          region: ""
+        },
+        currentPage: 1, //默认第一页
+        pageSize: 5,
+        //筛选的过滤信息
+        screening: {
+          areaValue: "", //城市/区域
+          area: [] //城市/区域
+        },
+        //表格信息
+        table: {
+          thead: [],
+          tbody: [],
+          tfoot: []
+        }
+      };
+    },
+    created() {
+      this.fetchData(this.pageSize, this.currentPage)
+    },
+    methods: {
+      /**
+       *  获取表格数据
+       * @param pageSize 每页分页返回的数目
+       * @param pageNo   当前分页
+       * @param serachMsg  模糊搜索信息(如果为空代表只获取数据未进行模糊搜索)
+       */
+      fetchData(pageSize, pageNo, serachMsg) {
+        var _this = this
+        this.loading = true
+        var dataOption = {
+          gcid: '0100099',
+          userid: 'ab0f10cd02094f7b9b82b82088742557',
+          token: 'e40f0b86-2ed6-4b62-8571-e63e1f23bbd3',
+          pageNo: pageNo,
+          pageSize: pageSize,
+          status: 1
+        }
+        if (this.searchMsgbtn && serachMsg) {
+          dataOption = Object.assign({}, dataOption, serachMsg)
+        }
+        this.axios({
+          method: 'post',
+          url: this.$store.state.api.finance.alreadyCollect,
+          data: dataOption
+        }).then(function (response) {
+          _this.loading = false
+          _this.table.tbody = response.data.result.financeList;
+          _this.totalRecord = response.data.result.totalRecord;
+        })
+      },
+      /**
+       * 模糊搜索
+       */
+      search() {
+        this.searchMsgbtn = true
+        var searchMsgOptins = {
+         minPrice: this.searchMsg.minPrice,  //最小价格
+          maxPrice: this.searchMsg.maxPrice,  //最大价格
+          likeName: this.searchMsg.likeName,  //编号或员工姓名
+          startDate: this.searchMsg.date[0],  //起止日期
+          endDate: this.searchMsg.date[1]     //结束日期
+        }
+        this.fetchData(this.pageSize, this.currentPage, searchMsgOptins)
+      },
+      /**
+       * 计算应收金额
+       * @param item  table 表格中的每行数据
+       * @returns {string}  应收金额
+       */
+      allMoney(item) {
+        var money = 0;
+        // exemptLateFeeStatus 滞纳金减免状态
+        if (item.exemptLateFeeStatus) {
+          // planPrice 初始本金 , lateFee 滞纳金 , exemptLateFee 减免的滞纳金
+          money = Number(item.planPrice) + Number(item.lateFee) - Number(item.exemptLateFee);
+        } else {
+          money = Number(item.planPrice) + Number(item.lateFee);
+        }
+        money += '元'
+        var str = ''
+        if (item.exemptLateFeeStatus) {
+          str = `(共减免滞纳金${item.exemptLateFee}元)`
+        }
+        return money + str;
+      },
+      receiptMoney(item) {
+        var money = 0;
+        if (item.exemptLateFeeStatus) {
+          money = Number(item.planPrice) + Number(item.lateFee) - Number(item.exemptLateFee);
+        } else {
+          money = Number(item.planPrice) + Number(item.lateFee);
+        }
+        return money += '元'
+      },
+      /**
+       * 改变分页每页显示的条数
+       * @param val 每页显示的数目
+       */
+      handleSizeChange(val) {
+        var _this = this
+        this.pageSize = val
+        this.fetchData(val, _this.currentPage)
+      },
+      /**
+       * 分页操作(下一页,上一页,点击分页跳转)
+       * @param val 将要跳转到的分页
+       */
+      handleCurrentChange(val) {
+        this.currentPage = val
+        this.fetchData(this.pageSize, val)
+      },
+
+      back(item) {
+        this.paymentRejectOption.currentItem = item
+        this.paymentRejectOption.btn = true
+      },
+      rejectOptionBack() {
+        var {id, gcid} = this.paymentRejectOption.currentItem
+        var msg = this.paymentRejectOption.msg
+        console.log(id, gcid)
+        this.axios({
+          method: 'post',
+          url: this.$store.state.api.finance.financeReject,
+          data: {
+            id: id,
+            gcid: gcid,
+            rejectReason: msg
+          }
+        }).then(function (response) {
+          console.log(response);
+        })
+        this.paymentRejectOption.btn = false
+      }
+    },
+  };
+</script>
+
+<style scoped>
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row.no-margin-bottom {
+    margin-bottom: 0px;
+  }
+
+  .el-row.search {
+    background: #fff;
+    padding: 20px;
+  }
+
+  .el-button--primary {
+    width: 100%;
+    background-color: #188ff0;
+    border-color: #188ff0;
+    border-radius: 0px;
+  }
+
+  /deep/ .el-input__inner {
+    border-radius: 0px;
+  }
+
+  /deep/ .el-button--primary span {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table tr {
+    background: #f7f7f7;
+  }
+
+  /deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+    background: #ffffff;
+  }
+
+  /deep/ .el-table th > .cell {
+    font-size: 14px;
+  }
+
+  /deep/ .el-table thead tr {
+    background-color: #ffffff;
+    color: #2e3445;
+  }
+
+  /deep/ .el-pagination {
+    padding: 0px;
+    text-align: right;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li.active {
+    background-color: #188ff0;
+  }
+
+  /deep/ .el-pagination.is-background .el-pager li:hover {
+    color: #188ff0;
+  }
+
+  /deep/ .el-form-item {
+    margin: 0px;
+    border: 1px solid #dcdfe6;
+  }
+
+  /deep/ .el-form-item .el-input__inner {
+    border: 0px;
+  }
+
+  /deep/ .noMarginRight > .el-form-item__content {
+    width: 100%;
+  }
+
+  /deep/ .el-form--inline .el-form-item {
+    margin-right: 10px;
+  }
+
+  /deep/ .el-form--inline .el-form-item__label {
+    padding-left: 12px;
+    padding-right: 0px;
+  }
+
+  /deep/ .el-date-editor .el-range-input {
+    width: 60px;
+  }
+
+  /deep/ .el-date-editor .el-range-separator {
+    width: 30px;
+  }
+
+  .finance-state {
+    display: inline-block;
+    color: #fff;
+    width: 70px;
+    padding-right: 10px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+  }
+
+  .finance-state.yellow {
+    background: url(../../../static/image/icon_state_yellow.png) left top / 70px 30px no-repeat !important;
+  }
+
+  .finance-state.gray {
+    background: url(../../../static/image/icon_state_gray.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.black {
+    background: url(../../../static/image/icon_state_black.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.green {
+    background: url(../../../static/image/icon_state_green.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.blue {
+    background: url(../../../static/image/icon_state_blue.png) left top / 70px 30px no-repeat;
+  }
+
+  .finance-state.red {
+    background: url(../../../static/image/icon_state_red.png) left top / 70px 30px no-repeat;
+  }
+
+  .repayment-state {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    margin-right: 10px;
+  }
+
+  .repayment-state.red {
+    background: #f32240;
+    color: #fff;
+  }
+
+  .finance-state.orange {
+    background: url(../../../static/image/icon_state_orange.png) left top / 70px 30px no-repeat;
+  }
+
+  .repayment-state.yellow {
+    background: #f3af2a;
+    color: #fff;
+  }
+
+  .repayment-state.green {
+    background: #1dbd6d;
+    color: #fff;
+  }
+
+  /*弹框 */
+  /deep/ .el-dialog__title {
+    color: #188ff0;
+    font-size: 16px;
+  }
+
+  /* 收款驳回 (可编辑)*/
+
+  /deep/ .confirmReceiptInput .el-dialog__body,
+  /deep/ .paymentReject .el-dialog__body {
+    padding: 0 30px;
+  }
+
+  /deep/ .confirmReceiptInput .el-dialog__footer,
+  /deep/ .paymentReject .el-dialog__footer {
+    margin-top: 10px;
+    padding-bottom: 40px;
+  }
+
+  .confirmReceiptInput .text,
+  .paymentReject .text {
+    font-size: 16px;
+    color: #2e3445;
+  }
+
+  .confirmReceiptInput .textMsg,
+  .paymentReject .textMsg {
+    padding: 29px 0 14px 0;
+    color: #2e3445;
+    font-size: 16px;
+  }
+
+  .paymentReject .textMsg2 {
+    color: #f2082e;
+  }
+
+  .confirmReceiptInput .edit,
+  .paymentReject .edit {
+    width: 100%;
+    border: solid 1px #e8e8e8;
+    resize: none;
+    padding: 11px 0 0 14px;
+    color: #999999;
+    font-size: 14px;
+    height: 100px;
+  }
+
+  .confirmReceiptInput .sureBtn2,
+  .paymentReject .sureBtn2 {
+    width: 100px;
+    height: 40px;
+    background-color: #188ff0;
+    border-radius: 5px;
+    margin-left: 310px;
+    text-align: center;
+    color: #fff;
+  }
+
+  /*查看收支详情  确认收款*/
+  /deep/ .waitBack .el-row {
+    margin-bottom: 10px;
+  }
+
+  /deep/ .waitBack .el-dialog__body {
+    padding: 0;
+  }
+
+  /deep/ .waitBack .el-dialog__footer {
+    background: #f2f6f7;
+  }
+
+  /deep/ .waitBack .waitBack_item {
+    margin: 0 26px;
+    padding-bottom: 21px;
+    border-bottom: 1px dashed #dfe4e6;
+  }
+
+  .waitBack .item_title {
+    color: #188ff0;
+    padding-left: 8px;
+    font-size: 14px;
+    border-left: 3px solid #188ff0;
+    margin: 21px 0 29px 0;
+    font-weight: normal;
+  }
+
+  .waitBack .item_name {
+    color: #404040;
+    font-size: 14px;
+  }
+
+  .waitBack .item_content {
+    color: #999999;
+    font-size: 12px;
+  }
+
+  .waitBack .img_list {
+    overflow: auto;
+    margin-left: 26px;
+    padding: 0;
+  }
+
+  .waitBack .img_list li {
+    width: 100px;
+    height: 100px;
+    background-color: #dfe4e6;
+    float: left;
+    margin-right: 20px;
+  }
+
+  .waitBack .sureBox {
+    border: none;
+    padding-bottom: 4px;
+    margin-left: 25px;
+  }
+
+  .waitBack .sureGet {
+    width: 80px;
+    height: 36px;
+    background-color: #188ff0;
+    border-radius: 2px;
+    line-height: 36px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 16px;
+    margin-left: 592px;
+  }
+
+  /deep/ .el-button.rejectBtn {
+    width: 120px;
+    text-align: left;
+    border-radius: 0;
+    text-indent: 10px;
+  }
+
+  /deep/ .el-table td, .el-table th.is-leaf {
+    border: none;
+  }
+</style>

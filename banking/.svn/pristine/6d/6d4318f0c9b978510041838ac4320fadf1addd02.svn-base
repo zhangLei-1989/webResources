@@ -1,0 +1,1827 @@
+<template>
+	<el-main v-loading="loading.all" element-loading-background="rgba(0, 0, 0, 0)">
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.minPrice" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.maxPrice" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <span style="padding:0px 12px;">用款时间</span>
+            <el-date-picker
+              type="daterange"
+              v-model="formInline.data"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.likeName" placeholder="借款人"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary" @click="getBorrowApplyList">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+    <el-table :data="table.tbody" stripe @row-click="tableRowClick">
+          <el-table-column
+            prop="status"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state">已通过</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="借款人/金额/用款时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.apartmentName }}</p>
+                <p>
+                  <span style="margin-right:7px;">{{ scope.row.expectPrice + '元' }}</span>
+                  <span>{{ scope.row.expectDate }}</span>
+                </p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="hosueAddress"
+            label="房源信息">
+          </el-table-column>
+          <el-table-column
+            label="类别/还款方式/申请时间">
+            <template slot-scope="scope">
+                <p>
+                  <span style="margin-right:7px;">寓租贷</span>
+                  <span>每月等额</span>
+                </p>
+                <p>{{ scope.row.ct }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="handle"
+            label="操作"
+            width="140">
+            <template slot-scope="scope">
+              <el-button v-show="isButtonAuthor('adb2a6f5d9314cdd97719f7699a4f1d0')" type="primary" plain @click.stop="openContract1(scope.row.id ,scope.row)">生成合同</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          @current-change="currentChange"
+          @size-change="sizeChange"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      title="查看详情"
+      width="50%"
+      :visible.sync="dialog.detail"
+      :before-close="closeDetail">
+      <el-row v-loading="loading.detail" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+          <h1 class="title">申请信息</h1>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">贷款种类</span>
+              <span class="detail-item" v-text="dialog.detail_msg.borrowType"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">用款时间</span>
+              <span class="detail-item" v-text="dialog.detail_msg.expectDate"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">还款方式</span>
+              <span class="detail-item">每月等额</span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">用款额度</span>
+              <span class="detail-item" v-text="dialog.detail_msg.expectPrice"></span>
+            </el-col>
+            <el-col :span="16">
+              <span class="detail-title">用款明细</span>
+              <span class="detail-item" v-text="dialog.detail_msg.remark"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">公寓性质</span>
+              <span class="detail-item" v-text="dialog.detail_msg.apartmentType"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">公寓品牌</span>
+              <span class="detail-item" v-text="dialog.detail_msg.apartmentBrand"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">联系人姓名</span>
+              <span class="detail-item" v-text="dialog.detail_msg.borrowPerson"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">联系人电话</span>
+              <span class="detail-item" v-text="dialog.detail_msg.borrowPhone"></span>
+            </el-col>
+            <el-col :span="16">
+              <span class="detail-title">公司地址</span>
+              <span class="detail-item" v-text="dialog.detail_msg.apartmentAddress"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <span class="detail-title">申请说明</span>
+              <span class="detail-item" v-text="dialog.detail_msg.description"></span>
+            </el-col>
+          </el-row>
+          <hr class="division" />
+          <h1 class="title">借款项目</h1>
+          <el-row>
+            <el-col :span="24">
+              <span class="detail-title">房源地址</span>
+              <span class="detail-item" v-text="dialog.detail_msg.hosueAddress"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">户型</span>
+              <span class="detail-item" v-text="dialog.detail_msg.roomType"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">面积</span>
+              <span class="detail-item" v-text="dialog.detail_msg.area"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">装修</span>
+              <span class="detail-item" v-text="dialog.detail_msg.decoration"></span>
+            </el-col>
+          </el-row>
+          <h1 class="title no-mark">业主信息</h1>
+          <el-row>
+            <el-col :span="4">
+              <span class="detail-title">业主附件</span>
+            </el-col>
+            <el-col :span="5">
+              <img :src="dialog.detail_msg.idcZmURL" class="detail-img" />
+              <p class="detail-item" style="text-align:center;">身份证正面</p>
+            </el-col>
+            <el-col :span="5">
+              <img :src="dialog.detail_msg.idcFmURL" class="detail-img" />
+              <p class="detail-item" style="text-align:center;">身份证反面</p>
+            </el-col>
+            <el-col :span="5">
+              <img :src="dialog.detail_msg.ContractImageURL" class="detail-img" />
+              <p class="detail-item" style="text-align:center;">合同附件</p>
+            </el-col>
+            <el-col :span="5">
+              <img :src="dialog.detail_msg.HouseCardURL" class="detail-img" />
+              <p class="detail-item" style="text-align:center;">房产证明</p>
+            </el-col>
+          </el-row>
+          <h1 class="title">收款人信息</h1>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">姓名</span>
+              <span class="detail-item" v-text="dialog.detail_msg.payeeName"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">手机</span>
+              <span class="detail-item" v-text="dialog.detail_msg.payeePhone"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">身份证</span>
+              <span class="detail-item" v-text="dialog.detail_msg.idCard"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">开户行</span>
+              <span class="detail-item" v-text="dialog.detail_msg.bank"></span>
+            </el-col>
+            <el-col :span="16">
+              <span class="detail-title">银行账号</span>
+              <span class="detail-item" v-text="dialog.detail_msg.bankAccount"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="4">
+              <span class="detail-title">委托书</span>
+            </el-col>
+            <el-col :span="5">
+              <img v-if="dialog.detail_msg.EntrustURL" :src="dialog.detail_msg.EntrustURL" class="detail-img" />
+              <p v-if="dialog.detail_msg.EntrustURL" class="detail-item" style="text-align:center;">委托书</p>
+            </el-col>
+          </el-row>
+          <hr class="division" />
+          <h1 class="title">审批意见</h1>
+          <el-row>
+            <el-col :span="8">
+              <span class="detail-title">审批人</span>
+              <span class="detail-item" v-text="dialog.detail_msg.checkName"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">审批时间</span>
+              <span class="detail-item" v-text="dialog.detail_msg.checkDate"></span>
+            </el-col>
+            <el-col :span="8">
+              <span class="detail-title">审批状态</span>
+              <span class="detail-item" :class="dialog.detail_msg.borrowStatusClass" v-text="dialog.detail_msg.borrowStatusText"></span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <span class="detail-title">审批备注</span>
+              <span class="detail-item" v-text="dialog.detail_msg.approvalIdea"></span>
+            </el-col>
+          </el-row>
+        </el-col>
+      </el-row>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="dialog.contract1"
+      :before-close="closeContractAll">
+      <div class="contractBody">
+        <el-row v-loading="loading.contract1" element-loading-background="rgba(0, 0, 0, 0)">
+          <el-col :span="24">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.borrowType"></el-input>
+              </el-col>
+              <el-col :span="12">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.template"></el-input>
+              </el-col>
+            </el-row>
+            <el-row style="margin-bottom:40px;">
+              <el-col :span="24" style="padding-top:70px;">
+                <div class="progress-bg-gray">
+                  <div class="progress-bg-active progress-bg-active1"></div>
+                  <el-row class="progress-tips-con">
+                    <el-col :span="6" class="progress-tips-item active">
+                      <div class="progress-tips-item-text">借款合同</div>
+                    </el-col>
+                    <el-col :span="6" class="progress-tips-item">
+                      <div class="progress-tips-item-text">借款申请表</div>
+                    </el-col>
+                    <el-col :span="6" class="progress-tips-item">
+                      <div class="progress-tips-item-text">还款付息确认表</div>
+                    </el-col>
+                    <el-col :span="6" class="progress-tips-item">
+                      <div class="progress-tips-item-text">付款委托书</div>
+                    </el-col>
+                  </el-row>
+                </div>
+              </el-col>
+            </el-row>
+            <hr class="division" />
+            <el-row class="margin-bottom10">
+              <el-col :span="4" style="padding-top:10px;">
+                <h1 class="title" style="margin:0px;">甲方信息</h1>
+              </el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_source_data.basePartnerName"></el-input>
+                <!-- <el-select v-model="dialog.contract1_source_data.basePartner_id" placeholder="选择甲方" style="width:100%;" @change="changeBasePartner" disabled>
+                  <el-option v-for="item of dialog.contract1_source_data.basePartner" :key="item.id" :label="item.apartmentName" :value="item.id"></el-option>
+                </el-select> -->
+              </el-col>
+              <!-- <el-col :span="12" style="padding-top:10px;">
+                <span style="font-size:14px;color:#999999;line-height:20px;margin-left:15px;">可在"设置 - 字典"中设置，方便以后选择</span>
+              </el-col> -->
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.apartmentName"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.apartmentAddress"></el-input>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="10" style="padding-right:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.apartmentPerson"></el-input>
+              </el-col>
+              <el-col :span="10" style="padding-left:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.apartmentPhone"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4" style="padding-top:10px;">
+                <h1 class="title" style="margin:0px;">乙方信息</h1>
+              </el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.financeName"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.lender"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.financeAddress"></el-input>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="10" style="padding-right:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.financePerson"></el-input>
+              </el-col>
+              <el-col :span="10" style="padding-left:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.financePhone"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4" style="padding-top:10px;">
+                <h1 class="title" style="margin:0px;">内容信息</h1>
+              </el-col>
+              <el-col :span="10" class="timeTime" style="padding-right:5px;">
+                <div style="border:1px solid #e6eced;padding:0 15px;display:flex;align-items:center;">
+                  <span style="color:#404040;font-size:14px;">合同签约时间：</span>
+                  <el-date-picker
+                    v-model="dialog.contract1_source_data.signTime"
+                    type="date"
+                    value-format="yyyy-MM-dd"
+                    placeholder="请选择"
+                    format="yyyy-MM-dd" class="noBorder" style="display:inline-block;flex:1;">
+                  </el-date-picker>
+                </div>
+              </el-col>
+              <el-col :span="10" style="padding-left:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.no"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled"  v-model="dialog.contract1_msg.cnPrice"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="15" style="padding-right:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.term"></el-input>
+              </el-col>
+              <el-col :span="5" style="padding-left:5px;">
+                <el-input disabled="disabled" style="text-align: right;" v-model="dialog.contract1_msg.yearLimit"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="10" style="padding-right:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.repayDate"></el-input>
+              </el-col>
+              <el-col :span="10" style="padding-left:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.yearRate"></el-input>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.amoutMonth"></el-input>
+              </el-col>
+            </el-row>
+            <el-row class="margin-bottom10">
+              <el-col :span="4" style="padding-top:10px;">
+                <h1 class="title" style="margin:0px;">乙方收款账户</h1>
+              </el-col>
+              <el-col :span="10" style="padding-right:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.payeeName"></el-input>
+              </el-col>
+              <el-col :span="10" style="padding-left:5px;">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.bank"></el-input>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="4">&nbsp;</el-col>
+              <el-col :span="20">
+                <el-input disabled="disabled" v-model="dialog.contract1_msg.bankAccount"></el-input>
+              </el-col>
+            </el-row>
+          </el-col>
+        </el-row>
+      </div>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="previewCONTRACTFILE">预览</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="openContract2">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="dialog.contract2"
+      :before-close="closeContractAll">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" v-model="dialog.contract1_msg.borrowType"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" v-model="dialog.contract1_msg.template"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active2"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">申请公司</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" v-model="dialog.contract2_msg.applicantCompany"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">申请信息</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" v-model="dialog.contract2_msg.applicationType"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract2_msg.quota"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract2_msg.paymenTime"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" v-model="dialog.contract2_msg.purpose"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">收款账户</h1>
+        </el-col>
+        <el-col :span="20">
+          <table border="1" class="receivables-table">
+            <tr>
+              <td>房源地址</td>
+              <td colspan="3" class="receivables-table-gray" v-text="dialog.contract2_msg.houseAddress"></td>
+            </tr>
+            <tr>
+              <td>用款金额</td>
+              <td class="receivables-table-gray" v-text="dialog.contract2_msg.quota2"></td>
+              <td>收款人姓名</td>
+              <td class="receivables-table-gray" v-text="dialog.contract2_msg.name"></td>
+            </tr>
+            <tr>
+              <td>收款人电话</td>
+              <td class="receivables-table-gray" v-text="dialog.contract2_msg.phone"></td>
+              <td>开户行</td>
+              <td class="receivables-table-gray" v-text="dialog.contract2_msg.bankName"></td>
+            </tr>
+            <tr>
+              <td>银行账号</td>
+              <td colspan="3" class="receivables-table-gray" v-text="dialog.contract2_msg.bankAccount"></td>
+            </tr>
+          </table>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="previewCONTRACT_BORROW">预览</el-button>
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="closeContract2">上一页</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="openContract3">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="dialog.contract3"
+      :before-close="closeContractAll">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input disabled="disabled" v-model="dialog.contract1_msg.borrowType"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-input disabled="disabled" v-model="dialog.contract1_msg.template"></el-input>
+        </el-col>
+      </el-row>
+      <el-row style="margin-bottom:40px;">
+        <el-col :span="24" style="padding-top:70px;">
+          <div class="progress-bg-gray">
+            <div class="progress-bg-active progress-bg-active3"></div>
+            <el-row class="progress-tips-con">
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款合同</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">借款申请表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item active">
+                <div class="progress-tips-item-text">还款付息确认表</div>
+              </el-col>
+              <el-col :span="6" class="progress-tips-item">
+                <div class="progress-tips-item-text">付款委托书</div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-col>
+      </el-row>
+      <hr class="division" />
+      <el-row>
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">甲方信息</h1>
+        </el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.applicantCompany"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">其他信息</h1>
+        </el-col>
+        <el-col :span="15" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.houseAddress"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.houseNumber"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.moneyPurpose"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.quota"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="10" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.yearRate"></el-input>
+        </el-col>
+        <el-col :span="10" style="padding-left:5px;">
+          <el-input disabled="disabled" value="还款方式：　每月等额"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="20">
+          <el-input disabled="disabled" v-model="dialog.contract3_msg.term"></el-input>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10">
+        <el-col :span="4" style="padding-top:10px;">
+          <h1 class="title" style="margin:0px;">还款计划</h1>
+        </el-col>
+        <el-col v-if="dialog.ratePriceList[0]" :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="dialog.ratePriceList[0].splitStartDate"></el-input>
+        </el-col>
+        <el-col v-if="dialog.ratePriceList[0]" :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled"  :value="'本金：'+dialog.ratePriceList[0].price"></el-input>
+        </el-col>
+        <el-col v-if="dialog.ratePriceList[0]" :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" :value="'利息：'+dialog.ratePriceList[0].interests"></el-input>
+        </el-col>
+        <el-col v-if="dialog.ratePriceList[0]" :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;" v-text="'合计：'+dialog.ratePriceList[0].splitprice"></span>
+        </el-col>
+      </el-row>
+      <el-row class="margin-bottom10" v-for="(item,index) in dialog.ratePriceList.slice(1)"
+      :key="index">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" v-model="item.splitStartDate"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled"  :value="'本金：'+item.price"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" :value="'利息：'+item.interests"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;" v-text="'合计：'+item.splitprice"></span>
+        </el-col>
+      </el-row>
+      <!--<el-row class="margin-bottom10">
+        <el-col :span="4">&nbsp;</el-col>
+        <el-col :span="5" style="padding-right:5px;">
+          <el-input disabled="disabled" value="2017-12-12"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="本金：5000"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;">
+          <el-input disabled="disabled" value="利息：100"></el-input>
+        </el-col>
+        <el-col :span="5" style="padding-left:5px;padding-top:10px;">
+          <span style="font-size:14px;color:#000;line-height:20px;margin-left:15px;">合计：5100</span>
+        </el-col>
+      </el-row>-->
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="previewCONTRACT_REPAY">预览</el-button>
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="closeContract3">上一页</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="openContract4">下一项</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      title="生成合同"
+      width="50%"
+      :visible="dialog.contract4"
+      :before-close="closeContractAll">
+      <el-row v-loading="loading.contract4" element-loading-background="rgba(0, 0, 0, 0)">
+        <el-col :span="24">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-input disabled="disabled" v-model="dialog.contract1_msg.borrowType"></el-input>
+          </el-col>
+          <el-col :span="12">
+            <el-input disabled="disabled" v-model="dialog.contract1_msg.template"></el-input>
+          </el-col>
+        </el-row>
+          <el-row style="margin-bottom:40px;">
+            <el-col :span="24" style="padding-top:70px;">
+              <div class="progress-bg-gray">
+                <div class="progress-bg-active progress-bg-active4"></div>
+                <el-row class="progress-tips-con">
+                  <el-col :span="6" class="progress-tips-item active">
+                    <div class="progress-tips-item-text">借款合同</div>
+                  </el-col>
+                  <el-col :span="6" class="progress-tips-item active">
+                    <div class="progress-tips-item-text">借款申请表</div>
+                  </el-col>
+                  <el-col :span="6" class="progress-tips-item active">
+                    <div class="progress-tips-item-text">还款付息确认表</div>
+                  </el-col>
+                  <el-col :span="6" class="progress-tips-item active">
+                    <div class="progress-tips-item-text">付款委托书</div>
+                  </el-col>
+                </el-row>
+              </div>
+            </el-col>
+          </el-row>
+          <hr class="division" />
+          <el-row>
+            <el-col :span="4" style="padding-top:10px;">
+              <h1 class="title" style="margin:0px;">委托人</h1>
+            </el-col>
+            <el-col :span="20">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.applicantCompany1"></el-input>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="4" style="padding-top:10px;">
+              <h1 class="title" style="margin:0px;">受托人</h1>
+            </el-col>
+            <el-col :span="20">
+              <el-input disabled="disabled" value="公司名称:" v-model="dialog.contract4_msg.applicantCompany2"></el-input>
+            </el-col>
+          </el-row>
+          <el-row class="margin-bottom10">
+            <el-col :span="4" style="padding-top:10px;">
+              <h1 class="title" style="margin:0px;">借款信息</h1>
+            </el-col>
+            <el-col :span="10" style="padding-right:5px;">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.beginDate"></el-input>
+            </el-col>
+            <el-col :span="10" style="padding-left:5px;">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.price"></el-input>
+            </el-col>
+          </el-row>
+          <el-row class="margin-bottom10">
+            <el-col :span="4">&nbsp;</el-col>
+            <el-col :span="15" style="padding-right:5px;">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.term"></el-input>
+            </el-col>
+            <el-col :span="5" style="padding-left:5px;">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.yearLimit"></el-input>
+            </el-col>
+          </el-row>
+          <el-row class="margin-bottom10">
+            <el-col :span="4">&nbsp;</el-col>
+            <el-col :span="20">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.moneyPurpose"></el-input>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="4">&nbsp;</el-col>
+            <el-col :span="20">
+              <el-input disabled="disabled" v-model="dialog.contract4_msg.paymentType"></el-input>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="4" style="padding-top:10px;">
+              <h1 class="title" style="margin:0px;">收款账户</h1>
+            </el-col>
+            <el-col :span="20">
+              <table border="1" class="receivables-table">
+                <tr>
+                  <td>房源地址</td>
+                  <td colspan="3" class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.houseAddress}}</td>
+                </tr>
+                <tr>
+                  <td>用款金额</td>
+                  <td class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.price}}</td>
+                  <td>收款人姓名</td>
+                  <td class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.payeeName}}</td>
+                </tr>
+                <tr>
+                  <td>收款人电话</td>
+                  <td class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.payeePhone}}</td>
+                  <td>开户行</td>
+                  <td class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.bank}}</td>
+                </tr>
+                <tr>
+                  <td>银行账号</td>
+                  <td colspan="3" class="receivables-table-gray">{{dialog.contract1_source_data.creatContract.bankAccount}}</td>
+                </tr>
+              </table>
+            </el-col>
+          </el-row>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="previewCONTRACT_MANDATE">预览</el-button>
+        <el-button type="primary" plain style="width:auto;border-radius:4px;" @click="openContract3">上一页</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="sureCreatContract">发送</el-button>
+      </template>
+    </el-dialog>
+	</el-main>
+</template>
+
+<script>
+import tool from "../../../static/js/tool.js";
+export default {
+  name: "AlreadyAdopted",
+  data() {
+    const self = this;
+
+    return {
+      currentItem: {}, //当前操作行
+      contrantId: "", //合同id
+
+      bindSrc: window.bindSrc,
+      numPages: undefined,
+      loading: {
+        all: true, //整页的loading
+        detail: true, //查看详情弹出框的loading
+        contract1: true, //生成合同1的loading
+        contract4: false //生成合同4的loading
+      },
+      currentItemId: "", //当前选项的id
+      dialog: {
+        detail: false, //是否显示，查看详情弹出框
+        detail_msg: {}, //详情弹出框内容
+
+        contract1: false, //生成合同第1步的弹出框
+        contract2: false, //生成合同第2步的弹出框
+        contract3: false, //生成合同第3步的弹出框
+        contract4: false, //生成合同第4步的弹出框
+
+        //生成合同第1步的弹出框的显示信息
+        contract1_msg: {
+          borrowType: "合同类型：", //合同类型
+          template: "合同模板：", //合同模板
+          apartmentName: "借款人：", //借款人
+          apartmentAddress: "住所地：", //借款方住所地
+          apartmentPerson: "法定代表：", //借款方法定代表
+          apartmentPhone: "电话：", //借款方电话
+          financeName: "名字：", //乙方名字
+          lender: "贷款人：", //贷款人
+          financePerson: "法定代表：", //金融方法定代表
+          financeAddress: "住所地：", //金融方住所地
+          financePhone: "电话：", //金融方电话
+          signDate: "合同签订时间：", //合同签订时间
+          no: "合同编号：", //合同编号
+          cnPrice: "借款金额（大写）：", //借款金额
+          term: "借款期限：", //借款期限
+          yearLimit: "月", //借款年限
+          repayDate: "每月还本付息日：", //固定还款日
+          yearRate: "借款利率年化：", //借款利率年化
+          amoutMonth: "每月等额还贷本息金额：", //每月等额还贷本息金额
+          payeeName: "收款人：", //收款人
+          bank: "开户行：", //开户行
+          bankAccount: "银行账号：" //银行账号
+        },
+        //生成合同第1步的弹出框的真实数据
+        contract1_source_data: {
+          basePartner: [], //合作方列表
+          basePartner_id: "", //选中的合作方的gcid
+          basePartnerName: "名字：",
+          contractId: "", //合同id
+          signTime: new Date(),
+          creatContract: {
+            paymentType: "", //支付方式
+            moneyPurpose: "", //款项用途
+            beginDate: "", //开始日期
+            endDate: "", //结束日期
+            price: "", //借款金额 本金
+            houseAddress: "", //房源地址
+            payeeName: "", //收款人姓名
+            payeePhone: "", //收款人电话
+            bank: "", //开户行
+            bankAccount: "" // 银行账号
+          } //生成合同数据
+        },
+
+        //生成合同第2步的弹出框的显示信息
+        contract2_msg: {
+          applicantCompany: "公司名称：", //公司名称
+          applicationType: "申请类型：", //申请类型
+          quota: "申请总金额：", //申请总金额
+          paymenTime: "付款时间：", //付款时间
+          purpose: "借款用途：", //借款用途
+          houseAddress: "", //房源地址
+          quota2: "", //用款金额
+          name: "", //收款人姓名
+          phone: "", //收款人电话
+          bankName: "", //开户行
+          bankAccount: "" //银行账号
+        },
+
+        //生成合同第3步的弹出框的显示信息
+        contract3_msg: {
+          applicantCompany: "公司名称：", //公司名称
+          houseAddress: "用款房源：", //用款房源
+          houseNumber: "套", //房源套数
+          moneyPurpose: "款项用途：", //款项用途
+          quota: "放款金额：", //放款金额
+          yearRate: "借款利率（年化）：", //借款利率（年化）
+          term: "借款期限：" //借款期限
+        },
+        //生成合同第4步的弹出框的显示信息
+        contract4_msg: {
+          applicantCompany1: "公司名称：", //公司名称 委托人
+          applicantCompany2: "公司名称：", //用款房源 受托人
+          beginDate: "借款日期：", //借款日期
+          price: "借款金额：", //借款金额
+          term: "借款期限：", //借款期限
+          yearLimit: "月", //借款年限
+          moneyPurpose: "借款用途：", //借款用途
+          paymentType: "支付方式：" //支付方式
+        },
+
+        //收支列表
+        ratePriceList: []
+      },
+      //筛选的过滤信息
+      screening: {
+        areaValue: "", //城市/区域
+        area: [] //城市/区域
+      },
+
+      currentPage: 1, //当前页
+      pageSize: 10, //每页条数
+      totalRecord: 0, //总条数
+
+      // 搜索数据
+      formInline: {
+        minPrice: "", //最低金额
+        maxPrice: "", //最大金额
+        date: "", // 时间
+        likeName: "" //用款人
+      },
+
+      //表格信息
+      table: {
+        tbody: []
+      }
+    };
+  },
+  methods: {
+    /**-----显示，查看详情弹出框----- */
+    openDetail(id) {
+      this.dialog.detail = true;
+      this.getDetail(id);
+    },
+    /**-----隐藏，查看详情弹出框----- */
+    closeDetail() {
+      this.dialog.detail = false;
+    },
+
+    /**-----查询详情数据----- */
+    getDetail(id) {
+      const self = this;
+      //开启loading
+      self.loading.detail = true;
+      self
+        .axios({
+          method: "post",
+          url: this.$store.state.api.borrowApply.getBorrowApplyList,
+          data: {
+            id: id
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading.detail = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            const { baseJsonObject, borroJsonObject } = data.result;
+            const detail_msg = {
+              id: id,
+              borrowType: borroJsonObject.borrowType == 1 ? "寓租贷" : "寓租贷", //贷款种类
+              expectDate: borroJsonObject.expectDate, //用款时间
+              expectPrice: borroJsonObject.expectPrice, //用款额度
+              description: borroJsonObject.description, //用款明细
+              apartmentType:
+                borroJsonObject.apartmentType == 0 ? "企业" : "个人", //公寓性质
+              apartmentBrand: baseJsonObject.apartmentBrand, //公寓方品牌
+              borrowPerson: baseJsonObject.borrowPerson, //联系人姓名
+              borrowPhone: baseJsonObject.borrowPhone, //联系人电话
+              apartmentAddress: baseJsonObject.apartmentAddress, //公司地址
+              remark: borroJsonObject.remark, //申请说明
+              hosueAddress: borroJsonObject.hosueAddress, //房屋地址
+              roomType: borroJsonObject.roomType, //户型
+              area: borroJsonObject.area + "㎡", //面积
+              decoration: borroJsonObject.decoration, //装修
+              payeeName: borroJsonObject.payeeName, //收款人姓名
+              payeePhone: borroJsonObject.payeePhone, //收款人手机
+              idCard: borroJsonObject.idCard, //身份证
+              bank: borroJsonObject.bank, //开户行
+              bankAccount: borroJsonObject.bankAccount, //银行账号
+              idcZmURL: data.result.idcardface.smallImgrul
+                ? data.result.idcardface.smallImgrul
+                : data.result.idcardface.bigImgurl, //身份证正面地址
+              idcFmURL: data.result.idcardback.smallImgrul
+                ? data.result.idcardback.smallImgrul
+                : data.result.idcardback.bigImgurl, //身份证背面地址
+              ContractImageURL:
+                data.result.contractlist.length > 0
+                  ? data.result.contractlist[0].smallImgrul
+                  : "", //合同图片地址
+              HouseCardURL: data.result.propertycertificate.smallImgrul
+                ? data.result.propertycertificate.smallImgrul
+                : data.result.propertycertificate.bigImgurl, //房产证图片地址
+              EntrustURL: data.result.ownerproxy.smallImgrul
+                ? data.result.ownerproxy.smallImgrul
+                : data.result.ownerproxy.bigImgurl, //委托书
+              checkName: borroJsonObject.checkName, //审批人
+              checkDate: borroJsonObject.checkDate, //审批时间
+              approvalIdea: borroJsonObject.approvalIdea //审批意见
+            };
+            if (borroJsonObject.borrowStatus == 1) {
+              detail_msg.borrowStatusClass = "green";
+              detail_msg.borrowStatusText = "已通过";
+            } else if (borroJsonObject.borrowStatus == 2) {
+              detail_msg.borrowStatusClass = "red";
+              detail_msg.borrowStatusText = "已驳回";
+            }
+            self.dialog.detail_msg = detail_msg;
+          }
+        })
+        .catch(error => {
+          self.loading.all = false;
+        });
+    },
+
+    /**-----预览借款合同PDF----- */
+    previewCONTRACTFILE() {
+      const self = this;
+      window.open(
+        "/static/pdfjs/web/viewer.html?url=" +
+          encodeURIComponent(
+            self.dialog.contract1_source_data.creatContract.CONTRACTFILE.fileUrl
+          )
+      );
+    },
+    /**-----预览借款申请表PDF----- */
+    previewCONTRACT_BORROW() {
+      const self = this;
+      window.open(
+        "/static/pdfjs/web/viewer.html?url=" +
+          encodeURIComponent(
+            self.dialog.contract1_source_data.creatContract.CONTRACT_BORROW
+              .fileUrl
+          )
+      );
+    },
+    /**-----预览还款付息确认表PDF----- */
+    previewCONTRACT_REPAY() {
+      const self = this;
+      window.open(
+        "/static/pdfjs/web/viewer.html?url=" +
+          encodeURIComponent(
+            self.dialog.contract1_source_data.creatContract.CONTRACT_REPAY
+              .fileUrl
+          )
+      );
+    },
+    /**-----预览付款委托书PDF----- */
+    previewCONTRACT_MANDATE() {
+      const self = this;
+      window.open(
+        "/static/pdfjs/web/viewer.html?url=" +
+          encodeURIComponent(
+            self.dialog.contract1_source_data.creatContract.CONTRACT_MANDATE
+              .fileUrl
+          )
+      );
+    },
+
+    /**-----关闭所有生成合同的弹出框----- */
+    closeContractAll() {
+      this.dialog.contract1 = false;
+      this.dialog.contract2 = false;
+      this.dialog.contract3 = false;
+      this.dialog.contract4 = false;
+    },
+
+    /**-----显示，生成合同第1步的弹出框----- */
+    openContract1(id, currentItem) {
+      this.currentItem = currentItem;
+      this.creatContract(id, currentItem.apartmentId);
+      this.currentItemId = id;
+      this.dialog.contract1 = true;
+      this.dialog.contract2 = false;
+      this.dialog.contract3 = false;
+      this.dialog.contract4 = false;
+    },
+    /**-----隐藏，生成合同第1步的弹出框----- */
+    closeContract1() {
+      this.dialog.contract1 = false;
+      this.dialog.contract1_source_data.signTime = new Date();
+    },
+
+    /**-----显示，生成合同第2步的弹出框----- */
+    openContract2() {
+      this.dialog.contract1 = false;
+      this.dialog.contract2 = true;
+      this.dialog.contract3 = false;
+      this.dialog.contract4 = false;
+    },
+    /**-----隐藏，生成合同第2步的弹出框----- */
+    closeContract2() {
+      this.dialog.contract2 = false;
+      this.dialog.contract1 = true;
+    },
+
+    /**-----显示，生成合同第3步的弹出框----- */
+    openContract3() {
+      this.dialog.contract1 = false;
+      this.dialog.contract2 = false;
+      this.dialog.contract3 = true;
+      this.dialog.contract4 = false;
+    },
+    /**-----隐藏，生成合同第3步的弹出框----- */
+    closeContract3() {
+      this.dialog.contract3 = false;
+      this.dialog.contract2 = true;
+    },
+
+    /**-----显示，生成合同第4步的弹出框----- */
+    openContract4(id) {
+      this.dialog.contract1 = false;
+      this.dialog.contract2 = false;
+      this.dialog.contract3 = false;
+      this.dialog.contract4 = true;
+    },
+    /**-----隐藏，生成合同第4步的弹出框----- */
+    closeContract4() {
+      this.dialog.contract4 = false;
+      this.dialog.contract3 = true;
+    },
+
+    /**-----生成合同----- */
+    async creatContract(id, apartmentId) {
+      const self = this;
+      self.loading.contract1 = true;
+      //查询合作方数据
+      const { data: basePartner } = await self.getBasePartner(apartmentId);
+      if (basePartner.status.code == 200) {
+        self.dialog.contract1_source_data.basePartner = basePartner.result.list;
+        if (basePartner.result.list.length > 0) {
+          self.dialog.contract1_source_data.basePartner_id =
+            basePartner.result.list[0].id;
+        }
+
+        //查询生成合同数据
+        const { data: creatContract } = await self.getCreatContract(id);
+        if (creatContract.status.code == 200) {
+          self.dialog.contract1_source_data.creatContract =
+            creatContract.result;
+          self.showCreatContract(creatContract.result);
+
+          const contractId = creatContract.result.id; //合同id
+          if (contractId) {
+            self.dialog.contract1_source_data.contractId = contractId;
+            //查询收入数据
+            const { data: ratePriceList } = await self.getRatePriceList(
+              contractId
+            );
+            if (ratePriceList.status.code == 200) {
+              const { list } = ratePriceList.result;
+              self.dialog.ratePriceList = list;
+            }
+          }
+        }
+      }
+      self.loading.contract1 = false;
+    },
+
+    /**-----显示生成合同----- */
+    showCreatContract(contract) {
+      const self = this;
+
+      //获取对应的审批数据
+      let borrowApply = self.table.tbody.filter(item => {
+        return item.id == self.currentItemId;
+      });
+      if (borrowApply.length > 0) {
+        borrowApply = borrowApply[0];
+      }
+
+      self.resetCreatContract();
+      //设置生成合同1弹出框的内容
+      self.dialog.contract1_source_data.basePartnerName +=
+        "　" + contract.apartmentName;
+      self.dialog.contract1_msg.apartmentName += "　" + contract.apartmentName;
+      self.dialog.contract1_msg.apartmentAddress +=
+        "　" + contract.apartmentAddress;
+      self.dialog.contract1_msg.apartmentPerson +=
+        "　" + contract.apartmentPerson;
+      self.dialog.contract1_msg.apartmentPhone +=
+        "　" + contract.apartmentPhone;
+      self.dialog.contract1_msg.borrowType +=
+        "　" + (contract.borrowType == 1 ? "寓租贷" : "寓缮贷");
+      self.dialog.contract1_msg.template += "　单项借款协议";
+      self.dialog.contract1_msg.financeName += "　" + contract.financeName;
+      self.dialog.contract1_msg.lender += "　" + contract.financePerson;
+      self.dialog.contract1_msg.financePerson += "　" + contract.financePerson;
+      self.dialog.contract1_msg.financeAddress +=
+        "　" + contract.financeAddress;
+      self.dialog.contract1_msg.financePhone += "　" + contract.financePhone;
+      self.dialog.contract1_msg.signDate += "　" + contract.signDate;
+      self.dialog.contract1_msg.no += "　" + contract.no;
+      self.dialog.contract1_msg.cnPrice += "　" + contract.cnPrice;
+      self.dialog.contract1_msg.term +=
+        "　" + contract.beginDate + "　　至　　" + contract.endDate;
+      self.dialog.contract1_msg.yearLimit = "　" + contract.yearLimit + "月";
+      self.dialog.contract1_msg.repayDate += "　" + contract.repayDate + "日";
+      self.dialog.contract1_msg.yearRate += "　" + contract.yearRate + "%";
+      self.dialog.contract1_msg.amoutMonth += "　" + contract.amoutMonth + "元";
+      self.dialog.contract1_msg.payeeName += "　" + contract.payeeName;
+      self.dialog.contract1_msg.bank += "　" + contract.bank;
+      self.dialog.contract1_msg.bankAccount += "　" + contract.bankAccount;
+
+      //设置生成合同2弹出框的内容
+      self.dialog.contract2_msg.applicantCompany +=
+        "　" + contract.apartmentName;
+      self.dialog.contract2_msg.applicationType +=
+        "　" + (contract.borrowType == 1 ? "寓租贷" : "寓缮贷");
+      self.dialog.contract2_msg.quota += "　" + contract.price;
+      self.dialog.contract2_msg.paymenTime += "　" + borrowApply.expectDate;
+      self.dialog.contract2_msg.purpose += "　" + borrowApply.remark; // contract.moneyPurpose;
+      self.dialog.contract2_msg.houseAddress = contract.apartmentAddress;
+      self.dialog.contract2_msg.quota2 = contract.price;
+      self.dialog.contract2_msg.name = contract.payeeName;
+      self.dialog.contract2_msg.phone = contract.payeePhone;
+      self.dialog.contract2_msg.bankName = contract.bank;
+      self.dialog.contract2_msg.bankAccount = contract.bankAccount;
+
+      //设置生成合同3弹出框的内容
+      self.dialog.contract3_msg.applicantCompany +=
+        "　" + contract.apartmentName;
+      self.dialog.contract3_msg.houseAddress += "　" + contract.houseAddress;
+      self.dialog.contract3_msg.houseNumber =
+        "　" + contract.houseNumber + "套";
+      self.dialog.contract3_msg.moneyPurpose += "　" + contract.moneyPurpose;
+      self.dialog.contract3_msg.quota += "　" + contract.price;
+      self.dialog.contract3_msg.yearRate += "　" + contract.yearRate + "%";
+      self.dialog.contract3_msg.term +=
+        "　" + contract.beginDate + "　　至　　" + contract.endDate;
+
+      //第四弹窗内容
+      self.dialog.contract4_msg.applicantCompany1 +=
+        "　" + contract.financeName;
+      self.dialog.contract4_msg.applicantCompany2 +=
+        "　" + contract.apartmentName;
+      self.dialog.contract4_msg.beginDate += "　" + borrowApply.expectDate;
+      self.dialog.contract4_msg.price += "　" + contract.price + "元";
+      self.dialog.contract4_msg.term +=
+        "　" + contract.beginDate + "　　至　　" + contract.endDate;
+      self.dialog.contract4_msg.yearLimit = "　" + contract.yearLimit + "月";
+      self.dialog.contract4_msg.moneyPurpose += "　" + contract.moneyPurpose;
+      self.dialog.contract4_msg.paymentType += "　网银转账";
+    },
+
+    /**-----获取生成合同的数据----- */
+    getCreatContract(id, gcid) {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.borrowApply.creatContract,
+        data: {
+          gcid: "0100099",
+          userid: userid,
+          params: {
+            id: id,
+            gcid: gcid
+          }
+        }
+      });
+    },
+
+    /**-----获取合作方列表----- */
+    getBasePartner(apartmentId) {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.borrowApply.getBasepartnerList,
+        data: {
+          params: {
+            apartmentId: apartmentId
+          }
+        }
+      });
+    },
+
+    /**-----查询收支信息----- */
+    getRatePriceList(contractId) {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.borrowApply.getRatePriceList,
+        data: {
+          gcid: "0100099",
+          userid: userid,
+          params: {
+            contractId: contractId
+          }
+        }
+      });
+    },
+
+    /**-----查询预览合同的PDF----- */
+    getCreatPDF(contractId) {
+      return this.axios({
+        method: "post",
+        url: this.$store.state.api.picture.getFile,
+        data: {
+          params: {
+            bizId: contractId,
+            bigType: 6,
+            smallType: 1
+          }
+        }
+      });
+    },
+
+    /**-----更改甲方时触发----- */
+    async changeBasePartner() {
+      const self = this;
+      self.loading.contract1 = true;
+      const id = self.dialog.contract1_source_data.creatContract.applyId;
+      //const gcid = self.dialog.contract1_source_data.basePartner_gcid;
+      const { data: creatContract } = await self.getCreatContract(id, gcid);
+      if (creatContract.status.code == 200) {
+        self.dialog.contract1_source_data.creatContract =
+          creatContract.result.list;
+        self.showCreatContract(creatContract.result.list);
+      }
+      self.loading.contract1 = false;
+    },
+
+    /**-----查询列表数据----- */
+    getBorrowApplyList() {
+      const self = this;
+      //开启loading
+      self.loading.all = true;
+      self
+        .axios({
+          method: "post",
+          url: this.$store.state.api.borrowApply.getList,
+          data: {
+            minPrice: self.formInline.minPrice,
+            maxPrice: self.formInline.maxPrice,
+            pageNo: self.currentPage,
+            likeName: self.formInline.likeName,
+            pageSize: self.pageSize,
+            startDate: self.formInline.date[0],
+            endDate: self.formInline.date[1],
+            status: 1 //0待审批 1已通过 2已驳回 3生成合同
+          }
+        })
+        .then(response => {
+          //关闭loading
+          self.loading.all = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.table.tbody = data.result.list;
+            self.totalRecord = data.result.totalRecord;
+          }
+        })
+        .catch(error => {
+          self.loading.all = false;
+        });
+    },
+
+    /**-----当前页改变时调用----- */
+    currentChange(currentPage) {
+      const self = this;
+      self.currentPage = currentPage;
+      self.getBorrowApplyList();
+    },
+
+    /**-----每页条目改变时调用----- */
+    sizeChange(pageSize) {
+      const self = this;
+      self.currentPage = 1;
+      self.pageSize = pageSize;
+      self.getBorrowApplyList();
+    },
+
+    /**-----重置生成合同的显示信息----- */
+    resetCreatContract() {
+      const self = this;
+      const contract1_msg = {
+        borrowType: "合同类型：", //合同类型
+        template: "合同模板：", //合同模板
+        apartmentName: "借款人：", //借款人
+        apartmentAddress: "住所地：", //借款方住所地
+        apartmentPerson: "法定代表：", //借款方法定代表
+        apartmentPhone: "电话：", //借款方电话
+        financeName: "名字：", //乙方名字
+        lender: "贷款人：", //贷款人
+        financePerson: "法定代表：", //金融方法定代表
+        financeAddress: "住所地：", //金融方住所地
+        financePhone: "电话：", //金融方电话
+        signDate: "合同签订时间：", //合同签订时间
+        no: "合同编号：", //合同编号
+        cnPrice: "借款金额（大写）：", //借款金额
+        term: "借款期限：", //借款期限
+        yearLimit: "年", //借款年限
+        repayDate: "每月还本付息日：", //固定还款日
+        yearRate: "借款利率年化：", //借款利率年化
+        amoutMonth: "每月等额还贷本息金额：", //每月等额还贷本息金额
+        payeeName: "收款人：", //收款人
+        bank: "开户行：", //开户行
+        bankAccount: "银行账号：" //银行账号
+      };
+
+      const contract2_msg = {
+        applicantCompany: "公司名称：", //公司名称
+        applicationType: "申请类型：", //申请类型
+        quota: "申请总金额：", //申请总金额
+        paymenTime: "付款时间：", //付款时间
+        purpose: "借款用途：", //借款用途
+        houseAddress: "", //房源地址
+        quota2: "", //用款金额
+        name: "", //收款人姓名
+        phone: "", //收款人电话
+        bankName: "", //开户行
+        bankAccount: "" //银行账号
+      };
+
+      const contract3_msg = {
+        applicantCompany: "公司名称：", //公司名称
+        houseAddress: "用款房源：", //用款房源
+        houseNumber: "套", //房源套数
+        moneyPurpose: "款项用途：", //款项用途
+        quota: "放款金额：", //放款金额
+        yearRate: "借款利率（年化）：", //借款利率（年化）
+        term: "借款期限：" //借款期限
+      };
+
+      const contract4_msg = {
+        applicantCompany1: "公司名称：", //公司名称 委托人
+        applicantCompany2: "公司名称：", //用款房源 受托人
+        beginDate: "借款日期：", //借款日期
+        price: "借款金额：", //借款金额
+        term: "借款期限：", //借款期限
+        yearLimit: "年", //借款年限
+        moneyPurpose: "借款用途：", //借款用途
+        paymentType: "支付方式：" //支付方式
+      };
+
+      self.dialog.contract1_msg = contract1_msg;
+      self.dialog.contract2_msg = contract2_msg;
+      self.dialog.contract3_msg = contract3_msg;
+      self.dialog.contract4_msg = contract4_msg;
+
+      self.dialog.contract1_source_data.basePartnerName = "名字：";
+    },
+
+    /**-----确认生成合同----- */
+    sureCreatContract() {
+      const self = this;
+      const userid = tool.getUserId();
+      if (!userid) {
+        self.$message.error("登录超时，请先登录！");
+        return;
+      }
+      //如果还在加载中
+      if (self.loading.contract1) {
+        return;
+      }
+      if (!self.dialog.contract1_source_data.basePartner_id) {
+        self.$message.error("请选择甲方！");
+        return;
+      }
+      if (!self.dialog.contract1_source_data.signTime) {
+        self.$message.error("请选择合同签约时间！");
+        return;
+      }
+      self.loading.contract4 = true;
+      self
+        .axios({
+          method: "post",
+          url: self.$store.state.api.borrowApply.saveContract,
+          data: {
+            gcid: "0100099",
+            userid: userid,
+            params: {
+              contractId: self.dialog.contract1_source_data.contractId,
+              signDate: self.dialog.contract1_source_data.signTime,
+              apartmentId: self.dialog.contract1_source_data.basePartner_id
+            }
+          }
+        })
+        .then(response => {
+          self.loading.contract4 = false;
+          const { data } = response;
+          if (data.status.code == 200) {
+            self.closeContractAll();
+            self.getBorrowApplyList();
+            self.$alert("操作成功", "提示");
+          }
+        })
+        .catch(error => {
+          self.loading.contract4 = false;
+        });
+    },
+
+    /**-----点击单行时触发----- */
+    tableRowClick(row) {
+      const self = this;
+      if (row && row.id) {
+        const id = row.id;
+        self.openDetail(id);
+      }
+    },
+
+    /**-----判断按钮是否有权限----- */
+    isButtonAuthor(id) {
+      const self = this;
+      const userInfo = tool.session.get("userInfo");
+      if (!userInfo) {
+        self.$router.replace("/login");
+      } else {
+        const systemResourcesList = userInfo.systemResourcesList;
+        if (systemResourcesList) {
+          const authorization = systemResourcesList;
+          const author = authorization.filter(
+            item => item.zIndex == 3 && item.id == id
+          );
+          if (author.length > 0) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+    }
+  },
+  created() {
+    var self = this;
+    self.getBorrowApplyList();
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+.el-button--primary.is-plain {
+  background-color: #fff;
+  border-color: #188ff0;
+  border-width: 1px;
+  color: #188ff0;
+}
+/deep/ .el-textarea__inner {
+  padding: 10px 15px;
+  min-height: 100px !important;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .el-input.is-disabled .el-input__inner {
+  background-color: #f0eeee;
+  border-color: #e6eced;
+  color: #404040;
+}
+/deep/ .noBorder .el-input__inner {
+  border: 0px;
+  padding-right: 0px;
+}
+/deep/ .el-table {
+  min-height: calc(100vh - 275px);
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 24px;
+}
+.el-input.is-disabled {
+  position: relative;
+}
+.el-input.is-disabled::before {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  content: "＊";
+  color: #f2082e;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_green.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+.title {
+  color: #188ff0;
+  padding-left: 20px;
+  position: relative;
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  font-weight: normal;
+  font-size: 14px;
+}
+.title::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 18px;
+  background-color: #188ff0;
+  position: absolute;
+  top: 1px;
+  left: 0px;
+}
+.title.no-mark {
+  padding-left: 0px;
+}
+.title.no-mark::before {
+  content: none;
+}
+.detail-title {
+  font-size: 14px;
+  color: #000;
+  margin-right: 20px;
+}
+.detail-item {
+  font-size: 12px;
+  color: #777;
+}
+.detail-item.red {
+  color: #f2082e;
+}
+.detail-item.green {
+  color: #01be6a;
+}
+.division {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dfe4e6;
+  margin: 0px;
+  margin-bottom: 20px;
+}
+.detail-img {
+  display: block;
+  border: 0px;
+  width: 85%;
+  height: 85%;
+  margin: 0 auto;
+}
+.error-message {
+  font-size: 14px;
+  color: #f2082e;
+  margin-bottom: 10px;
+}
+.error-success {
+  font-size: 14px;
+  color: #188ff0;
+  margin-bottom: 10px;
+}
+.progress-bg-gray {
+  width: 100%;
+  height: 10px;
+  background: #ebf0f2;
+  border-radius: 5px;
+  position: relative;
+}
+.progress-bg-active {
+  width: 0%;
+  height: 10px;
+  background: #188ff0;
+  border-radius: 5px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+.progress-bg-active.progress-bg-active1 {
+  width: 25%;
+}
+.progress-bg-active.progress-bg-active2 {
+  width: 50%;
+}
+.progress-bg-active.progress-bg-active3 {
+  width: 75%;
+}
+.progress-bg-active.progress-bg-active4 {
+  width: 100%;
+}
+.progress-tips-con {
+  width: 100%;
+  position: absolute;
+  left: 0px;
+  top: -40px;
+  margin: 0px;
+}
+.progress-tips-item {
+  position: relative;
+}
+.progress-tips-item::after {
+  position: absolute;
+  content: "";
+  left: 50%;
+  margin-left: -15px;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  background: #ebf0f2;
+  color: #666;
+  font-size: 14px;
+}
+.progress-tips-con .progress-tips-item:nth-of-type(1)::after {
+  content: "1";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(2)::after {
+  content: "2";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(3)::after {
+  content: "3";
+}
+.progress-tips-con .progress-tips-item:nth-of-type(4)::after {
+  content: "4";
+}
+.progress-tips-item.active::after {
+  background: #188ff0;
+  color: #fff;
+}
+.progress-tips-item .progress-tips-item-text {
+  color: #999999;
+  text-align: center;
+  font-size: 14px;
+  padding-bottom: 7px;
+}
+.progress-tips-item.active .progress-tips-item-text {
+  color: #188ff0;
+}
+.margin-bottom10 {
+  margin-bottom: 10px;
+}
+.receivables-table {
+  width: 100%;
+  border-color: #e6eced;
+  border-style: solid;
+  border-collapse: collapse;
+}
+.receivables-table td {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: #000;
+}
+.receivables-table td.receivables-table-gray {
+  color: #777;
+}
+.receivables-table tr:nth-of-type(even) {
+  background: #f2f6f7;
+}
+/deep/ .timeTime {
+}
+.contractBody {
+  height: calc(100vh - 300px);
+  overflow: auto;
+}
+</style>

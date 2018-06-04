@@ -1,0 +1,462 @@
+<template>
+  <el-main v-loading="loading" element-loading-background="rgba(0, 0, 0, 0)">
+    <el-row class="search">
+      <el-col :span="24">
+        <el-form :inline="true" class="demo-form-inline" style="display:flex;;">
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input placeholder="部门名称"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+    <el-row class="search noMargin" :gutter="20">
+      <el-col :span="4" class="noPaddingLeft">
+        <el-tree :data="data" style="background:#f2f6f7;"></el-tree>
+      </el-col>
+      <el-col :span="20" class="noPaddingRight">
+        <el-table
+          :data="tableData"
+          border
+          style="width: 100%">
+          <el-table-column
+            prop="date"
+            label="日期"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="name"
+            label="姓名"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="address"
+            label="地址">
+          </el-table-column>
+        </el-table>
+      </el-col>
+    </el-row>
+    <!--添加部门-->
+    <el-dialog
+      title="添加部门"
+      :visible="addDialogActive"
+      width="50%"
+      >
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-input class="required" placeholder="部门名称：" v-model="form.name"></el-input>
+        </el-col>
+        <el-col :span="12">
+          <el-cascader class="required" :options="options" :show-all-levels="false" style="width: 100%" placeholder="所属部门" v-model="form.parent"></el-cascader>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input class="required" placeholder="显示顺序：" v-model="form.showIndex"></el-input>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-select placeholder="请选择部门类型" style="width: 100%" v-model="form.typeId">
+            <el-option label="111" value="11"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="12">
+          <el-input class="required" placeholder="部门电话：" v-model="form.phone"></el-input>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="8">
+          <el-select placeholder="城市" style="width: 100%" v-model="form.cityId">
+            <el-option label="111" value="11"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="8">
+          <el-select placeholder="区域" style="width: 100%" v-model="form.townId">
+            <el-option label="111" value="11"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="8">
+          <el-select placeholder="商圈" style="width: 100%" v-model="form.districtId">
+            <el-option label="111" value="11"></el-option>
+          </el-select>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input placeholder="部门地址：" v-model="form.address"></el-input>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-input placeholder="部门描述：" v-model="form.desc"></el-input>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="">保存</el-button>
+      </template>
+    </el-dialog>
+  </el-main>
+</template>
+
+<script>
+import { mapState } from "vuex";
+export default {
+  name: "apartmentRole",
+  data() {
+    return {
+      loading: true,
+      options: [],
+      form: {
+        name: "", //部门名称
+        desc: "", //部门描述
+        showIndex: "", //部门顺序
+        address: "", //部门地址
+        typeId: "", //部门类型Id
+        parent: [], //父级部门id
+        phone: "", //电话
+        cityId: "", //城市id
+        townId: "", //区县id
+        districtId: "" //商圈id
+      },
+      tableData: [
+        {
+          date: "2016-05-02",
+          name: "王小虎",
+          address: "上海市普陀区金沙江路 1518 弄"
+        },
+        {
+          date: "2016-05-04",
+          name: "王小虎",
+          address: "上海市普陀区金沙江路 1517 弄"
+        },
+        {
+          date: "2016-05-01",
+          name: "王小虎",
+          address: "上海市普陀区金沙江路 1519 弄"
+        },
+        {
+          date: "2016-05-03",
+          name: "王小虎",
+          address: "上海市普陀区金沙江路 1516 弄"
+        }
+      ],
+      values: {
+        val: "",
+        val2: ""
+      },
+      data: [
+        {
+          label: "一级 1",
+          children: [
+            {
+              label: "二级 1-1",
+              children: [
+                {
+                  label: "三级 1-1-1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          label: "一级 2",
+          children: [
+            {
+              label: "二级 2-1",
+              children: [
+                {
+                  label: "三级 2-1-1"
+                }
+              ]
+            },
+            {
+              label: "二级 2-2",
+              children: [
+                {
+                  label: "三级 2-2-1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          label: "一级 3",
+          children: [
+            {
+              label: "二级 3-1",
+              children: [
+                {
+                  label: "三级 3-1-1"
+                }
+              ]
+            },
+            {
+              label: "二级 3-2",
+              children: [
+                {
+                  label: "三级 3-2-1"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  },
+  computed: mapState({
+    addDialogActive: state => state.apartmentRole.departmentDialogActive
+  }),
+  methods: {
+    save() {
+      console.log(this.form);
+    }
+  },
+  created() {
+    var self = this;
+
+    //获取部门列表
+    const getDepartmentList = function() {
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.department.getList,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3"
+        }
+      });
+    };
+
+    //获取城市列表
+    const getCityList = function() {
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.location.cityGetList,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3"
+        }
+      });
+    };
+
+    //获取区县列表
+    const getTownList = function(cityId) {
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.location.townGetList,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            cityId: cityId
+          }
+        }
+      });
+    };
+
+    //获取商圈列表
+    const getDistrictList = function(townId) {
+      return self.axios({
+        method: "post",
+        url: self.$store.state.api.setting.location.districtGetList,
+        data: {
+          gcid: "0100099",
+          userid: "ab0f10cd02094f7b9b82b82088742557",
+          token: "e40f0b86-2ed6-4b62-8571-e63e1f23bbd3",
+          params: {
+            townId: townId
+          }
+        }
+      });
+    };
+
+    //获取默认的  城市/区县/商圈
+    async function getCityTownDistrict() {
+      const { data: cityData } = await getCityList();
+      if (cityData.status.code == 200) {
+        let cityId = cityData.result.list[0].id;
+        cityId = "d94bba14-dec1-11e5-bcc3-00163e1c066c";
+        if (cityId) {
+          const { data: townData } = await getTownList(cityId);
+          if (townData.status.code == 200) {
+            const townId = townData.result.list[0].id;
+            if (townId) {
+              return await getDistrictList(townId);
+            }
+          }
+        }
+      }
+    }
+
+    self.axios.all([getDepartmentList(), getCityTownDistrict()]).then(
+      self.axios.spread(function(response1, response2) {
+        self.loading = false;
+        const { data: departmentList } = response1;
+        if (response2) {
+          const { data: district } = response2;
+          console.log(departmentList, district, 1111);
+        }
+      })
+    );
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+.el-input.is-disabled {
+  position: relative;
+}
+.el-input.is-disabled::before {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  content: "＊";
+  color: #f2082e;
+}
+/deep/ .required {
+  position: relative;
+}
+/deep/ .required::before {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  content: "＊";
+  color: #f2082e;
+  z-index: 999999;
+}
+/deep/ .el-cascader {
+  line-height: normal;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_blue.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+.title {
+  color: #188ff0;
+  padding-left: 20px;
+  position: relative;
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  font-weight: normal;
+  font-size: 14px;
+}
+.title::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 18px;
+  background-color: #188ff0;
+  position: absolute;
+  top: 1px;
+  left: 0px;
+}
+.title.no-mark {
+  padding-left: 0px;
+}
+.title.no-mark::before {
+  content: none;
+}
+.detail-title {
+  font-size: 14px;
+  color: #000;
+  margin-right: 20px;
+}
+.detail-item {
+  font-size: 12px;
+  color: #777;
+}
+.detail-item.red {
+  color: #f2082e;
+}
+</style>

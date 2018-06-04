@@ -1,0 +1,45 @@
+var Validation = function () {
+    this.cache = []
+}
+Validation.rules = {
+    isEmptyOrNull: function (value, errMsg) {
+        if (value === null || value === '') {
+            return errMsg
+        }
+    },
+    isMinLength: function (value, minLength, errMsg) {
+        if (value.length > minLength) {
+            return errMsg
+        }
+    },
+    isMaxLength: function (value, maxLength, errMsg) {
+        if (value.length < maxLength) {
+            return errMsg
+        }
+    },
+    isMobile: function (value, errMsg) {
+        var rule = /^((13[0-9])|(14[5|7])|(15([0-3]|[5-9]))|(18[0,5-9]))\\d{8}$/
+        if (!rule.test(value)) {
+            return errMsg
+        }
+    }
+}
+
+Validation.prototype = {
+    addRule: function (func) {
+        var arr = Array.prototype.slice.call(arguments)
+        arr.splice(0, 1)
+        this.cache.push(func.bind(this, ...arr))
+    },
+    startValidate: function () {
+        for (var i = 0; i < this.cache.length; i++) {
+            var errMsg = this.cache[i]()
+            if (errMsg) {
+                return errMsg
+            }
+        }
+
+    }
+}
+
+export default Validation;

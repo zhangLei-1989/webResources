@@ -1,0 +1,390 @@
+<template>
+<el-row>
+	<el-col :span="24" class="logo-container"></el-col>
+  	<el-col :span="24">
+	    <el-menu
+	      :default-active="activeIndex"
+	      class="el-menu-vertical-demo"
+	      background-color="#364364"
+	      text-color="#b3bbbb"
+	      :router="true"
+	      active-text-color="#fff">
+	     	
+	     	<!-- 侧边栏 - 路由router -->
+        <el-menu-item v-for="item of router" :key="item.id" :index="item.id" :route="item.path">
+          <i :class="item.icon"></i>
+          <span slot="title">{{item.title}}</span>
+        </el-menu-item>
+
+	    </el-menu>
+
+	</el-col>
+
+</el-row>
+</template>
+
+<script>
+import tool from "../../../static/js/tool.js";
+import "../../../static/css/theme/default.css";
+export default {
+  data() {
+    return {
+      activeIndex: "",
+      router: []
+    };
+  },
+  methods: {
+    /**-----判断按钮是否有权限----- */
+    isButtonAuthor(id) {
+      const self = this;
+      const userInfo = tool.session.get("userInfo");
+      const systemResourcesList = userInfo.systemResourcesList;
+      let author = [];
+      if (systemResourcesList) {
+        const authorization = systemResourcesList;
+        author = authorization.filter(
+          item => item.zIndex == 2 && item.parentId == id
+        );
+      }
+      return author;
+    }
+  },
+  created() {
+    const self = this;
+
+    const userInfo = tool.session.get("userInfo");
+    if (!userInfo) {
+      this.$router.replace("/login");
+    } else {
+      //根据权限控制1级菜单的初始路由
+
+      //控制台权限
+      const author1 = self.isButtonAuthor("77bedac4721e4c829616579287d611f8");
+      let path1 = "/examinaApproval/waitExaminaApproval";
+      if (author1.length > 0) {
+        const first = author1[0];
+        switch (first.id) {
+          case "e3d76acc11f248a7b94dfa54a1352774": //待审批
+            path1 = "/examinaApproval/waitExaminaApproval";
+            break;
+          case "bcfc49905859442bb64c5c7b7b24ecc0": //已通过
+            path1 = "/examinaApproval/alreadyAdopted";
+            break;
+          case "86e7c0016e2a45fbb07f8e85c70eab09": //已驳回
+            path1 = "/examinaApproval/alreadyReject";
+            break;
+          case "f2120a5269394b68be8ddd9a12e0044d": //已生成合同
+            path1 = "/examinaApproval/alreadyGenerate";
+            break;
+          default:
+            path1 = "/examinaApproval/waitExaminaApproval";
+            break;
+        }
+      }
+
+      //合同权限
+      const author2 = self.isButtonAuthor("2228e67acfa54c64bd4d2654af80bb0a");
+      let path2 = "/contract/examine";
+      if (author2.length > 0) {
+        const first = author2[0];
+        switch (first.id) {
+          case "a816d6f2d2454fc9b2e16a4d8cb5206b": //审核
+            path2 = "/contract/examine";
+            break;
+          case "a31feaef2e024f8dbdd9c8ee6ec8de81": //已完成
+            path2 = "/contract/alreadyComplete";
+            break;
+          default:
+            path2 = "/contract/examine";
+            break;
+        }
+      }
+
+      //财务权限
+      const author3 = self.isButtonAuthor("87d1f81b8c9e4d8486c0f18fe36aea13");
+      let path3 = "/finance/shouldCollect";
+      if (author3.length > 0) {
+        const first = author3[0];
+        switch (first.id) {
+          case "a95e4a96366f4901a87163c32483265f": //应收
+            path3 = "/finance/shouldCollect";
+            break;
+          case "f9fc139d778d44ce89fc0e2949440ad0": //已收
+            path3 = "/finance/alreadyCollect";
+            break;
+          case "242d99e3b2544cbabdb1e734124990aa": //待打款合同
+            path3 = "/finance/waitMoneyContract";
+            break;
+          default:
+            path3 = "/finance/shouldCollect";
+            break;
+        }
+      }
+
+      //合作权限
+      const author4 = self.isButtonAuthor("fad1cdf8288c4c5ea7ceb95948caa1dd");
+      let path4 = "/cooperation/partners";
+      if (author4.length > 0) {
+        const first = author4[0];
+        switch (first.id) {
+          case "e11f2863785641f28b14b1d15ade2c67": //合作方
+            path4 = "/cooperation/partners";
+            break;
+          default:
+            path4 = "/cooperation/partners";
+            break;
+        }
+      }
+
+      //设置权限
+      const author5 = self.isButtonAuthor("7ee6dbb5c81645b1a944fec22fd6bd27");
+      let path5 = "/setting/apartmentRole";
+      if (author5.length > 0) {
+        const first = author5[0];
+        switch (first.id) {
+          case "0c1303393755418dbbc8cf1f3b0c4b6f": //部门管理
+            path5 = "/setting/apartmentRole";
+            break;
+          case "fda0f8685f20408190627a8a30303804": //角色管理
+            path5 = "/setting/roleManger";
+            break;
+          case "3bed8fe1516a47fba7196e073ba36c03": //员工管理
+            path5 = "/setting/staffManger";
+            break;
+          case "f080f1a9b3184409ae57bf496b67286f": //企业公告
+            path5 = "/setting/corporateBulletin";
+            break;
+          default:
+            path5 = "/setting/apartmentRole";
+            break;
+        }
+      }
+
+      //1级菜单
+      const router = [
+        {
+          id: "1",
+          path: {
+            path: "/home"
+          },
+          title: "工作台",
+          icon: "icon-aside icon-aside-home"
+        },
+        {
+          id: "77bedac4721e4c829616579287d611f8",
+          path: {
+            path: path1
+          },
+          title: "审批",
+          icon: "icon-aside icon-aside-examina-approval"
+        },
+        {
+          id: "2228e67acfa54c64bd4d2654af80bb0a",
+          path: {
+            path: path2
+          },
+          title: "合同",
+          icon: "icon-aside icon-aside-order2"
+        },
+        {
+          id: "87d1f81b8c9e4d8486c0f18fe36aea13",
+          path: {
+            path: path3
+          },
+          title: "财务",
+          icon: "icon-aside icon-aside-finance"
+        },
+        {
+          id: "fad1cdf8288c4c5ea7ceb95948caa1dd",
+          path: {
+            path: path4
+          },
+          title: "合作",
+          icon: "icon-aside icon-aside-cooperation"
+        },
+        {
+          id: "7ee6dbb5c81645b1a944fec22fd6bd27",
+          path: {
+            path: path5
+          },
+          title: "设置",
+          icon: "icon-aside icon-aside-setting"
+        }
+      ];
+
+      const routerNew = [];
+
+      //1级权限控制
+      const systemResourcesList = userInfo.systemResourcesList;
+      if (systemResourcesList) {
+        const authorization = systemResourcesList;
+        const oneAuthor = authorization.filter(item => item.zIndex == 1);
+        routerNew.push(router[0]);
+        oneAuthor.forEach(item => {
+          router.forEach(item2 => {
+            if (item.id == item2.id) {
+              routerNew.push(item2);
+            }
+          });
+        });
+      }
+
+      this.router = routerNew;
+
+      //默认选择
+      const matchedList = self.$router.getMatchedComponents();
+      if (matchedList.length >= 2) {
+        const route = self.router.filter(item => {
+          return (
+            item.path.path
+              .toLowerCase()
+              .indexOf(matchedList[1].name.toLowerCase()) >= 0
+          );
+        });
+        if (route.length > 0) {
+          self.activeIndex = route[0].id;
+        }
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.logo-container {
+  background: #2e3953 url(../../../static/image/logo.png) center/80% no-repeat;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+.el-menu-vertical-demo {
+  width: 100%;
+  border-width: 0px;
+}
+
+.el-menu-item {
+  height: 54px;
+  line-height: 54px;
+  display: flex;
+  padding-left: 15px !important;
+}
+.el-menu-item span {
+  font-size: 14px;
+}
+
+.el-menu-item.is-active {
+  background: #2e3953 !important;
+}
+.el-menu-item.is-active::before {
+  display: block;
+  position: absolute;
+  left: 0;
+  content: "";
+  width: 4px;
+  height: 54px;
+  background: #ed0536;
+}
+
+.icon-aside::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 54px;
+}
+
+/****工作台****/
+.icon-aside.icon-aside-home::before {
+  background: url(../../../static/image/icon_home.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-home::before {
+  background: url(../../../static/image/icon_home_active.png) center no-repeat;
+}
+
+/****合同****/
+.icon-aside.icon-aside-order::before {
+  background: url(../../../static/image/icon_order.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-order::before {
+  background: url(../../../static/image/icon_order_active.png) center no-repeat;
+}
+
+/****合同2****/
+.icon-aside.icon-aside-order2::before {
+  background: url(../../../static/image/icon_order2.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-order2::before {
+  background: url(../../../static/image/icon_order2_active.png) center no-repeat;
+}
+
+/****房源****/
+.icon-aside.icon-aside-house-source::before {
+  background: url(../../../static/image/icon_house_source.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-house-source::before {
+  background: url(../../../static/image/icon_house_source_active.png) center
+    no-repeat;
+}
+
+/****房行****/
+.icon-aside.icon-aside-house-line::before {
+  background: url(../../../static/image/icon_house_line.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-house-line::before {
+  background: url(../../../static/image/icon_house_line_active.png) center
+    no-repeat;
+}
+
+/****用户****/
+.icon-aside.icon-aside-user::before {
+  background: url(../../../static/image/icon_user.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-user::before {
+  background: url(../../../static/image/icon_user_active.png) center no-repeat;
+}
+
+/****设置****/
+.icon-aside.icon-aside-setting::before {
+  background: url(../../../static/image/icon_setting.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-setting::before {
+  background: url(../../../static/image/icon_setting_active.png) center
+    no-repeat;
+}
+
+/****消息****/
+.icon-aside.icon-aside-message::before {
+  background: url(../../../static/image/icon_message.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-message::before {
+  background: url(../../../static/image/icon_message_active.png) center
+    no-repeat;
+}
+
+/****审批****/
+.icon-aside.icon-aside-examina-approval::before {
+  background: url(../../../static/image/icon_examina_approval.png) center
+    no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-examina-approval::before {
+  background: url(../../../static/image/icon_examina_approval_active.png) center
+    no-repeat;
+}
+
+/****财务****/
+.icon-aside.icon-aside-finance::before {
+  background: url(../../../static/image/icon_finance.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-finance::before {
+  background: url(../../../static/image/icon_finance_active.png) center
+    no-repeat;
+}
+
+/****合作****/
+.icon-aside.icon-aside-cooperation::before {
+  background: url(../../../static/image/icon_cooperation.png) center no-repeat;
+}
+.el-menu-item.is-active .icon-aside.icon-aside-cooperation::before {
+  background: url(../../../static/image/icon_cooperation_active.png) center
+    no-repeat;
+}
+</style>

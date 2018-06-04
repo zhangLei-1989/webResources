@@ -1,0 +1,351 @@
+<template>
+	<el-main v-loading="loading">
+		<el-row>
+      <el-col :span="24">
+        <el-tag type="cms active">待审核(0)</el-tag>
+        <el-tag type="cms">已通过(0)</el-tag>
+        <el-tag type="cms">已驳回(0)</el-tag>
+      </el-col>
+    </el-row>
+    <el-row class="noMarginLeft noMarginRight search">
+      <el-col :span="24">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" style="display:flex;;">
+          <el-form-item label="金额">
+            <el-input v-model="formInline.user" placeholder="最低" style="width:60px;"></el-input>
+            —
+            <el-input v-model="formInline.user" placeholder="最高" style="width:60px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-select v-model="formInline.region" placeholder="合同时间" style="width:100px;">
+              <el-option label="区域一" value="shanghai"></el-option>
+              <el-option label="区域二" value="beijing"></el-option>
+            </el-select>
+            <el-date-picker
+              type="daterange"
+              range-separator="—"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width:auto;">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item class="noMarginRight" style="flex:1;">
+            <el-input v-model="formInline.user" placeholder="合同编号"></el-input>
+          </el-form-item>
+          <el-form-item class="noMarginRight">
+            <el-button type="primary">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+        <el-table :data="table.tbody" stripe>
+          <el-table-column 
+            prop="a1"
+            label="状态">
+            <template slot-scope="scope">
+                <span class="finance-state">待审核</span>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a2"
+            label="借款人 / 金额 / 类别">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a2_name }}</p>
+                <p>{{ scope.row.a2_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a3"
+            label="合同编号 / 期限 / 时间">
+            <template slot-scope="scope">
+                <p>{{ scope.row.a3_name }}</p>
+                <p>{{ scope.row.a3_date_pruce }}</p>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            prop="a4"
+            label="申请时间">
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            prop="handle"
+            label="操作"
+            width="100">
+            <template slot-scope="scope">
+              <el-select v-model="screening.areaValue" placeholder="审核" @change="handle" style="width:100%;">
+                <el-option label="审批" value="0"></el-option>
+                <el-option label="查看" value="1"></el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+    <el-row class="noMargin search">
+      <el-col :span="24">
+        <el-pagination
+          background
+          :current-page="table.currentPage"
+          :page-sizes="[5, 10, 15, 20]"
+          :page-size="table.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="table.totalRecord">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      title="查看详情"
+      :visible="activeDetail"
+      width="50%"
+      :before-close="detailClose">
+      <h1 class="title">审批合同</h1>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">合同编号</span>
+          <span class="detail-item">hz090890</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">合同类别</span>
+          <span class="detail-item">寓租贷</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">合同金额</span>
+          <span class="detail-item">500000.00</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <span class="detail-title">合同期限</span>
+          <span class="detail-item">1年</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">合同时间</span>
+          <span class="detail-item">2017-12-26 - 2017-12-25</span>
+        </el-col>
+        <el-col :span="8">
+          <span class="detail-title">合同状态</span>
+          <span class="detail-item">待审核</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-tabs v-model="activeName">
+            <el-tab-pane label="借款合同" name="first">
+              <div style="width:100%;height:1000px;background:#f6f6f6;"></div>
+            </el-tab-pane>
+            <el-tab-pane label="借款信息表" name="second">借款信息表</el-tab-pane>
+            <el-tab-pane label="还款付息确认表" name="third">还款付息确认表</el-tab-pane>
+            <el-tab-pane label="付款委托书" name="fourth">付款委托书</el-tab-pane>
+          </el-tabs>
+        </el-col>
+      </el-row>
+      <template slot="footer">
+        <el-button type="danger" style="background-color:#f2082e !important;border-color:#f2082e !important;" @click="activeReject=true">驳回</el-button>
+        <el-button type="primary" style="width:auto;border-radius:4px;" @click="activeAdopt=true">通过</el-button>
+      </template>
+    </el-dialog>
+	</el-main>
+</template>
+
+<script>
+export default {
+  name: "ContractList",
+  data() {
+    return {
+      loading: false,
+      activeDetail: false,
+      activeName: 'first',
+
+      formInline: {
+        user: "",
+        region: ""
+      },
+
+      //筛选的过滤信息
+      screening: {
+        areaValue: "", //城市/区域
+        area: [] //城市/区域
+      },
+
+      //表格信息
+      table: {
+        thead: [],
+        tbody: [
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3_name: "XY20171129001",
+            a3_date_pruce: "1年 2017-11-30~2019-11-31",
+            a4: "20117-11-30 16:20:12"
+          },
+          {
+            a1: "待审核",
+            a2_name: "世纪源公寓公司",
+            a2_date_pruce: "5,000,000元  2017-11-30",
+            a3_name: "XY20171129001",
+            a3_date_pruce: "1年 2017-11-30~2019-11-31",
+            a4: "20117-11-30 16:20:12"
+          }
+        ],
+        tfoot: [],
+        currentPage: 1,
+        pageSize: 10,
+        totalRecord: 0
+      }
+    };
+  },
+  methods: {
+    handle() {
+      var areaValue = this.screening.areaValue;
+      if (areaValue == 0) {
+        this.activeDetail = true;
+      }
+    },
+    detailClose() {
+      this.activeDetail = false;
+      this.screening.areaValue = "审批";
+    }
+  }
+};
+</script>
+
+<style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-row.no-margin-bottom {
+  margin-bottom: 0px;
+}
+.el-row.search {
+  background: #fff;
+  padding: 20px;
+}
+.el-button--primary {
+  width: 100%;
+  background-color: #188ff0;
+  border-color: #188ff0;
+  border-radius: 0px;
+}
+/deep/ .el-input__inner {
+  border-radius: 0px;
+}
+/deep/ .el-button--primary span {
+  font-size: 14px;
+}
+/deep/ .el-table tr {
+  background: #f7f7f7;
+}
+/deep/ .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: #ffffff;
+}
+/deep/ .el-table th > .cell {
+  font-size: 14px;
+}
+/deep/ .el-table thead tr {
+  background-color: #ffffff;
+  color: #2e3445;
+}
+/deep/ .el-pagination {
+  padding: 0px;
+  text-align: right;
+}
+/deep/ .el-pagination.is-background .el-pager li.active {
+  background-color: #188ff0;
+}
+/deep/ .el-pagination.is-background .el-pager li:hover {
+  color: #188ff0;
+}
+/deep/ .el-form-item {
+  margin: 0px;
+  border: 1px solid #dcdfe6;
+}
+/deep/ .el-form-item .el-input__inner {
+  border: 0px;
+}
+/deep/ .noMarginRight > .el-form-item__content {
+  width: 100%;
+}
+/deep/ .el-form--inline .el-form-item {
+  margin-right: 10px;
+}
+/deep/ .el-form--inline .el-form-item__label {
+  padding-left: 12px;
+  padding-right: 0px;
+}
+/deep/ .el-date-editor .el-range-input {
+  width: 60px;
+}
+/deep/ .el-date-editor .el-range-separator {
+  width: 30px;
+}
+/deep/ .el-dialog__header {
+  border-bottom: 1px solid #f2f6f7;
+}
+/deep/ .el-dialog__title {
+  color: #188ff0;
+}
+/deep/ .el-dialog__headerbtn .el-dialog__close {
+  font-size: 14px;
+  color: #188ff0;
+}
+/deep/ .el-tabs__header{
+  margin: 0px;
+}
+/deep/ .el-tabs__content{
+  margin: 0px -20px;
+}
+.finance-state {
+  display: inline-block;
+  color: #fff;
+  width: 70px;
+  padding-right: 10px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: url(../../../static/image/icon_state_blue.png) left top no-repeat;
+  background-size: 70px 30px;
+}
+.title {
+  color: #188ff0;
+  padding-left: 20px;
+  position: relative;
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  font-weight: normal;
+  font-size: 14px;
+}
+.title::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 18px;
+  background-color: #188ff0;
+  position: absolute;
+  top: 1px;
+  left: 0px;
+}
+.title.no-mark {
+  padding-left: 0px;
+}
+.title.no-mark::before {
+  content: none;
+}
+.detail-title {
+  font-size: 14px;
+  color: #000;
+  margin-right: 20px;
+}
+.detail-item {
+  font-size: 12px;
+  color: #777;
+}
+.detail-item.red {
+  color: #f2082e;
+}
+.division {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dfe4e6;
+  margin: 0px;
+  margin-bottom: 20px;
+}
+</style>

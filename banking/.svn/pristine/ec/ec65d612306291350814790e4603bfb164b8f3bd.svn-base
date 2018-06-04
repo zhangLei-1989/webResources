@@ -1,0 +1,39 @@
+<template>
+	<el-container>
+        
+		<!-- 二级路由 -->
+		<el-header class="header" height="60px">
+			<cms-header :tabs="tabs"></cms-header>
+		</el-header>
+		<!-- 二级路由 -->
+
+		<router-view></router-view>
+		
+	</el-container>
+</template>
+
+<script>
+import cmsHeader from "@/components/public/CMSHeader";
+export default {
+  name: "ExaminaApproval",
+  data() {
+    return {
+      tabs: [
+        { name: "待审批", path: "/examinaApproval/waitExaminaApproval" },
+        { name: "已通过", path: "/examinaApproval/alreadyAdopted" },
+        { name: "已驳回", path: "/examinaApproval/alreadyReject" },
+        { name: "已生成合同", path: "/examinaApproval/alreadyGenerate" }
+      ]
+    };
+  },
+  components: {
+    cmsHeader
+  }
+};
+</script>
+
+<style scoped>
+.main {
+  background: #f2f3f5;
+}
+</style>
