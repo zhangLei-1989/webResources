@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>授信成功</title>
+</head>
+<body>
+<script>
+    var interfaceCredit = 'https://jjd.renrenxin.com/credit-web-pre'
+
+    function ajax (url, param) {
+        var sendCallBack = new XMLHttpRequest()
+        sendCallBack.open('POST', interfaceCredit + url, true)
+        sendCallBack.setRequestHeader('Content-Type', 'application/json')
+        sendCallBack.onload = function (e) {
+            if (this.status == 200) {
+                var text = this.responseText
+                var json = JSON.parse(text)
+                if (json.code == 200) {
+                    window.parent.postMessage('ok', '*')
+                } else {
+                    window.parent.postMessage('faile', '*')
+                    alert(json.message)
+                }
+            } else {
+                window.parent.postMessage('faile', '*')
+                alert('网络错误：' + this.status)
+            }
+        }
+        sendCallBack.send(JSON.stringify(param))
+    }
+
+    ajax('/prove/zhimaCreditCallback', {
+        url: window.location.href,
+        userId: window.localStorage.userId
+    })
+</script>
+</body>
+</html>

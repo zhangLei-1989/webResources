@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <title>授信成功</title>
+</head>
+<body>
+<script>
+  function browser () {
+    var u = navigator.userAgent
+    return {
+      trident: u.indexOf('Trident') > -1, // IE内核
+      crosswalk: !!u.match(/Crosswalk/i), // crosswalk app
+      presto: u.indexOf('Presto') > -1, // opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, // 苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') === -1, // 火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), // 是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), // ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Adr') > -1,
+      // android终端
+      iPhone: u.indexOf('iPhone') > -1, // 是否为iPhone或者QQHD浏览器
+      iPad: u.indexOf('iPad') > -1, // 是否iPad
+      webApp: u.indexOf('Safari') === -1, // 是否web应该程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') > -1, // 是否微信
+      qq: u.match(/\sQQ/i) === ' qq', // 是否QQ
+      language: (
+        navigator.browserLanguage || navigator.language
+      ).toLowerCase()
+    }
+  }
+
+  var interfaceCredit = 'https://www.gushistory.com/credit-web'
+
+  function ajax (url, param) {
+    var sendCallBack = new XMLHttpRequest()
+    sendCallBack.open('POST', interfaceCredit + url, true)
+    sendCallBack.setRequestHeader('Content-Type', 'application/json')
+    sendCallBack.onload = function (e) {
+      if (this.status == 200) {
+        var text = this.responseText
+        var json = JSON.parse(text)
+        if (json.code == 200) {
+          window.parent.postMessage('ok', '*')
+        } else {
+          window.parent.postMessage('faile', '*')
+          alert(json.message)
+        }
+      } else {
+        window.parent.postMessage('faile', '*')
+        alert('网络错误：' + this.status)
+      }
+    }
+    sendCallBack.send(JSON.stringify(param))
+  }
+
+  var isWeixin = browser().weixin
+
+  if (isWeixin && 'https:' == document.location.protocol) {
+    var url = window.location.href.replace('https://', 'http://')
+    window.location.replace(url)
+  } else {
+    ajax('/prove/zhimaCreditCallback', {
+      url: window.location.href,
+      userId: window.localStorage.userId
+    })
+  }
+</script>
+</body>
+</html>

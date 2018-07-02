@@ -1,0 +1,33 @@
+// 常量全部大写
+
+$MAIN_COLOR: #FF973A; // 主色
+$MINOR_COLOR: #ED594E; // 副色
+$GRAY_COLOR: #CCC; // 按钮置灰颜色
+$BODY_COLOR: #EFEFEF; // body 背景色
+$Q_COLOR: #F8F8F8; // 常见问题背景色
+$ELE_W_COLOR: white; // 块元素背景色-白色，还有一个灰色暂时没写
+$BORDER_COLOR: #CCC; // 线条颜色
+$BORDER_MAIN_COLOR: #FF973A; // 橙色线条
+$MAIN_TEXT_COLOR: #666; // 基本文字颜色
+$MINOR_TEXT_COLOR: white; // 有背景色文字颜色为白色
+$STRONG_TEXT_COLOR: #333; // 强调文字颜色
+$TIP_COLOR: #999; // 提示文字颜色
+$LINK_COLOR: #FF973A; // 链接文字颜色
+$GUIDE_COLOR: #FFF; // 新手引导文字颜色
+$BACKDROP_COLOR: rgba(0, 0, 0, .8); // 背景遮罩层背景色
+$ACTIVE_DROP_COLOR: rgba(0, 0, 0, .1); // 激活遮罩层背景色, 或阴影颜色
+$MIN_BTN_BORDER_COLOR: #AAA;
+
+$BORDER_RADIUS: 3px; // 圆角
+
+$BASE_FONT_SIZE: 16px;
+$MAX_FONT_SIZE: 25px;
+$LARGE_FONT_SIZE: 20px;
+$BUTTON_FONT_SIZE: 15px;
+$TIP_FONT_SIZE: 14px;
+$MIN_FONT_SIZE: 12px;
+$TITLE_FONT_SIZE: 16px;
+
+// $HEAD_COLOR: linear-gradient(to top, $MAIN_COLOR, $MINOR_COLOR);
+// $HEAD_COLOR: linear-gradient(bottom, #7da7ce, #5f92c2);
+$HEAD_COLOR: #4D5061

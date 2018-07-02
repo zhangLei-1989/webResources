@@ -1,0 +1,28 @@
+/**
+ * Created by hq5544 on 16/3/26.
+ * 可以改变 vuex 中状态的操作名
+ */
+export const TOGGLE_LOADING = 'TOGGLE_LOADING'
+export const TOGGLE_WAITING = 'TOGGLE_WAITING'
+export const CHANGE_TITLE = 'CHANGE_TITLE'
+export const TOGGLE_POPUP = 'TOGGLE_POPUP'
+export const TOGGLE_HIDE_BAN = 'TOGGLE_HIDE_BAN'
+export const SETTING_POPUP = 'SETTING_POPUP'
+export const TOGGLE_PULL_REFRESH = 'TOGGLE_PULL_REFRESH'
+export const SET_TEMP_INFO = 'SET_TEMP_INFO'
+export const CLEAR_TEMP_INFO = 'CLEAR_TEMP_INFO'
+export const SET_CREDIT_CENTER = 'SET_CREDIT_CENTER'
+export const SET_CURRENT_PAGE = 'SET_CURRENT_PAGE'
+export const SET_LAST_PAGE = 'SET_LAST_PAGE'
+export const SET_TOKEN = 'SET_TOKEN'
+export const SET_USER_INFO = 'SET_USER_INFO'
+export const SET_CREDIT_INFO = 'SET_CREDIT_INFO'
+export const SET_ADDRESS = 'SET_ADDRESS'
+export const SET_FEEDBACK = 'SET_FEEDBACK'
+export const SET_TO_REGIST = 'SET_TO_REGIST'
+export const TOGGLE_SHARE = 'TOGGLE_SHARE'
+export const TOGGLE_INIT_OK = 'TOGGLE_INIT_OK'
+export const SET_TRANSITION_MODE = 'SET_TRANSITION_MODE'
+export const TOGGLE_NEED_REFRESH = 'TOGGLE_NEED_REFRESH'
+
+export const GET_CREDIT_RESULT = 'GET_CREDIT_RESULT'

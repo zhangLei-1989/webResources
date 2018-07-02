@@ -1,0 +1,96 @@
+@import 'fragment';
+// scss 函数
+// 具有 计算 嵌套 传参 的功能
+
+@mixin real($backgroundUrl) {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: url($backgroundUrl) center no-repeat;
+  background-size: contain;
+  right: -4px;
+  top: 0;
+}
+
+@mixin user-icon($width) {
+  width: $width;
+  height: $width;
+  overflow: hidden;
+  border-radius: $width / 2;
+  background: $TIP_COLOR center no-repeat;
+  background-size: cover;
+  text-align: center;
+  line-height: $width;
+  font-size: $width / 2;
+  color: white;
+}
+
+@mixin selector-drop($backgroundHeight) {
+  background-image: linear-gradient(180deg, hsla(0, 0%, 100%, .95), hsla(0, 0%, 100%, .6)), linear-gradient(0deg, hsla(0, 0%, 100%, .95), hsla(0, 0%, 100%, .6));
+  background-position: top, bottom;
+  background-size: 100% $backgroundHeight;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+}
+
+@mixin selector-button-bar($iconUrl, $iconSize) {
+  .buttons {
+    background-color: $BODY_COLOR;
+    display: flex;
+    justify-content: space-between;
+    .button {
+      color: $LINK_COLOR;
+      padding: 10px;
+      line-height: 18px;
+      &:first-child::after {
+        content: '';
+        display: inline-block;
+        width: $iconSize;
+        height: $iconSize;
+        vertical-align: bottom;
+        background: url($iconUrl) center no-repeat;
+        background-size: contain;
+      }
+    }
+  }
+}
+
+@mixin selector-content($height) {
+  position: relative;
+  height: $height;
+  overflow: hidden;
+  display: flex;
+  .selector {
+    flex: 1;
+    transition-timing-function: ease-out;
+    div {
+      line-height: 40px;
+      height: 40px;
+      overflow: hidden;
+      text-align: center;
+      color: $MAIN_TEXT_COLOR;
+    }
+  }
+}
+
+@mixin selector-indicator($top) {
+  position: absolute;
+  height: 40px;
+  left: 0;
+  right: 0;
+  top: $top;
+  z-index: 2;
+  pointer-events: none;
+  &::before {
+    @extend %row-border;
+  }
+  &::after {
+    @extend %row-border;
+    top: 0;
+  }
+}

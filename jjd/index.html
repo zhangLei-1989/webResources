@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0">
+  <meta name="format-detection"
+        content="telephone=no">
+  <title>今借到</title>
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+  <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+  <style>
+    #init-load {
+      width: 100%;
+      display: block;
+      text-align: center;
+      line-height: 300px;
+    }
+  </style>
+  <script type='text/javascript'>
+    // growing io
+    var _vds = _vds || [];
+    window._vds = _vds;
+    (function () {
+      _vds.push(['setAccountId', '8f45afe3f49bbfd2']);
+      _vds.push(['enableHT', true]);
+      (function () {
+        var vds = document.createElement('script');
+        vds.type = 'text/javascript';
+        vds.async = true;
+        vds.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'dn-growing.qbox.me/vds.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(vds, s);
+      })();
+    })();
+  </script>
+  <script type="text/javascript">
+    // 诸葛 io
+    window.zhuge = window.zhuge || [];
+    window.zhuge.methods = "_init debug identify track trackLink trackForm page".split(" ");
+    window.zhuge.factory = function (b) {
+      return function () {
+        var a = Array.prototype.slice.call(arguments);
+        a.unshift(b);
+        window.zhuge.push(a);
+        return window.zhuge;
+      }
+    };
+    for (var i = 0; i < window.zhuge.methods.length; i++) {
+      var key = window.zhuge.methods[i];
+      window.zhuge[key] = window.zhuge.factory(key);
+    }
+    window.zhuge.load = function (b, x) {
+      if (!document.getElementById("zhuge-js")) {
+        var a = document.createElement("script");
+        var verDate = new Date();
+        var verStr = verDate.getFullYear().toString()
+          + verDate.getMonth().toString() + verDate.getDate().toString();
+
+        a.type = "text/javascript";
+        a.id = "zhuge-js";
+        a.async = !0;
+        a.src = (location.protocol == 'http:' ? "http://sdk.zhugeio.com/zhuge.min.js?v=" : 'https://zgsdk.zhugeio.com/zhuge.min.js?v=') + verStr;
+        a.onerror = function () {
+          window.zhuge.identify = window.zhuge.track = function (ename, props, callback) {
+            callback();
+          };
+        };
+        var c = document.getElementsByTagName("script")[0];
+        c.parentNode.insertBefore(a, c);
+        window.zhuge._init(b, x)
+      }
+    };
+    window.zhuge.load('7dae68ab5d87491a8509672d57f10639');
+  </script>
+  <script type="text/javascript">
+    // 惊鸿数据
+    (function() {
+      var jhd_params = {
+        jhd_appkey : 'jinjiedao',
+        // 必填。appkey
+        jhd_isTest : window.location.hostname === 'test.aizhantai.com' || window.location.hostname === 'jjd.renrenxin.com'
+      };
+      window.jhd_params = jhd_params;
+      window._JHsdk = {
+        action: function (p) {
+          if (p) {
+            try {
+              p.callback();
+            } catch (ex) {}
+          }
+        }
+      };
+      var _JHjs = document.createElement('script');
+      _JHjs.type='text/javascript';
+      _JHjs.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'cloud.jhddg.com/jhsdk_js.js';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(_JHjs, s);
+    })();
+  </script>
+</head>
+<body>
+<app id="init-load">正在加载中...</app>
+<!-- built files will be auto injected -->
+<script>
+  (function (i, s, o, g, r, a, m) {
+    i['GoogleAnalyticsObject'] = r;
+    i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date();
+    a = s.createElement(o),
+      m = s.getElementsByTagName(o)[0];
+    a.async = 1;
+    a.src = g;
+    m.parentNode.insertBefore(a, m)
+  })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+  ga('create', 'UA-85661912-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--<script defer-->
+        <!--src="http://webapi.amap.com/maps?v=1.3&key=623084a74873f2a8665b25d34b8e3ce1&plugin=AMap.Geocoder"></script>-->
+</body>
+</html>
+

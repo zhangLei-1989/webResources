@@ -1,0 +1,365 @@
+@import 'const';
+// 常用片段
+// @extend 和 % 可以理解为引用, 所以编译的时候会自动组合选择器
+// 没有嵌套功能
+
+%row-border {
+  content: "";
+  width: 100%;
+  height: 1px;
+  border-bottom: 1px solid $BORDER_COLOR;
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  transform: scaleY(.5);
+  transform-origin: 0 0;
+  z-index: 1;
+}
+
+%btn-border {
+  content: "";
+  width: 200%;
+  height: 200%;
+  position: absolute;
+  left: -50%;
+  top: -50%;
+  transform: scale(.5);
+}
+
+%full-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+%fixed-bottom {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+%active-drop {
+  content: "";
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: $ACTIVE_DROP_COLOR;
+}
+
+%card-shadow {
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .1);
+  border-radius: 10px;
+  margin: 0 10px 10px;
+  background-color: white;
+  overflow: hidden;
+}
+
+%fixed-box {
+  @extend %fixed-bottom;
+  z-index: 2;
+  .row > div {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+  button {
+    line-height: 30px;
+    height: auto;
+    color: $STRONG_TEXT_COLOR;
+    min-width: 90px;
+    margin-left: 10px;
+    font-size: $TIP_FONT_SIZE;
+    &::before {
+      @extend %btn-border;
+      border: 1px solid $MIN_BTN_BORDER_COLOR {
+        radius: $BORDER_RADIUS;
+      }
+    }
+    &.light {
+      color: $MAIN_COLOR;
+      &::before {
+        border-color: $MAIN_COLOR;
+      }
+    }
+    &.disabled {
+      color: $TIP_COLOR;
+      pointer-events: none;
+    }
+  }
+}
+
+%checkbox {
+  width: 22px;
+  height: 22px;
+  line-height: 20px;
+  text-align: center;
+  margin-right: 10px;
+  border-radius: 11px;
+  border: 1px solid $MAIN_COLOR;
+  color: $MAIN_COLOR;
+  font-size: $TIP_FONT_SIZE;
+  &.chosen {
+    border: none !important;
+    background-color: $MAIN_COLOR;
+    position: relative;
+    color: transparent !important;
+    &::before {
+      content: '';
+      height: 14px;
+      width: 8px;
+      border-top: 1px solid white;
+      border-left: 1px solid white;
+      position: absolute;
+      top: 3px;
+      left: 7px;
+      transform: rotate(-135deg);
+    }
+  }
+}
+
+%radio-box {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  > :first-child {
+    width: 22px;
+    height: 22px;
+    margin-right: 10px;
+    border-radius: 11px;
+    border: 1px solid $BORDER_COLOR;
+    &.chosen {
+      border-color: $MAIN_COLOR !important;
+      position: relative;
+      &::before {
+        content: '';
+        height: 10px;
+        width: 10px;
+        border-radius: 5px;
+        background-color: $MAIN_COLOR;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+      }
+    }
+  }
+}
+
+%checkbox-bar {
+  @extend %fixed-bottom;
+  color: $STRONG_TEXT_COLOR;
+  .row {
+    padding-right: 0;
+  }
+  button {
+    padding: 0 20px;
+    background-color: $MAIN_COLOR;
+    color: white;
+    height: 50px;
+    min-width: 100px;
+  }
+  .desc span {
+    color: $MAIN_COLOR;
+  }
+}
+
+%in-out-list-nav {
+  display: flex;
+  flex: 1;
+  text-align: center;
+  > div {
+    flex: 1;
+    padding: 15px 0;
+    div:last-child {
+      font-size: $TIP_FONT_SIZE;
+      color: $TIP_COLOR;
+    }
+  }
+  .selected {
+    background-color: $MAIN_COLOR;
+    &, div:last-child {
+      color: white !important;
+    }
+  }
+}
+
+%title-icon {
+  width: 24px;
+  height: 30px;
+  margin-right: 10px;
+  background: {
+    position: center;
+    repeat: no-repeat;
+    size: contain;
+  }
+}
+
+%title {
+  display: flex;
+  line-height: 30px;
+  .icon {
+    @extend %title-icon;
+  }
+}
+
+%date-computed {
+  display: flex;
+  align-items: baseline;
+  .computed {
+    color: $TIP_COLOR;
+    font-size: $TIP_FONT_SIZE;
+    margin-left: 1em;
+  }
+}
+
+%computed-title {
+  display: flex;
+  flex-direction: column;
+
+  > :first-child {
+    margin-top: 1em;
+  }
+
+  > :last-child {
+    color: $TIP_COLOR;
+    font-size: $TIP_FONT_SIZE;
+    margin: 1em 0;
+  }
+
+  span {
+    color: $LINK_COLOR;
+  }
+}
+
+%computed-list {
+  padding: 0 1em;
+  background-color: $BODY_COLOR;
+  margin: 1em 0;
+  border-radius: $BORDER_RADIUS;
+
+  .row {
+    padding: 0;
+    &:first-child::before,
+    &:last-child::after {
+      display: none;
+    }
+    &.default {
+      min-height: 40px;
+      padding-top: 1em;
+    }
+    &.title {
+      min-height: 40px;
+      padding-top: 1em;
+      div {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  }
+
+  .tip {
+    font-size: $MIN_FONT_SIZE;
+    color: $TIP_COLOR;
+    line-height: 20px;
+  }
+}
+
+%pwd-tip {
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  .step {
+    display: flex;
+    div {
+      width: 70px;
+      height: 30px;
+    }
+    :first-child,
+    :last-child {
+      color: $MAIN_TEXT_COLOR;
+      background-color: #d1d5db;
+      border-radius: 25px;
+      line-height: 30px;
+      text-align: center;
+      font-size: $LARGE_FONT_SIZE;
+      &.ok {
+        background-color: $ELE_W_COLOR;
+      }
+    }
+    .line {
+      position: relative;
+      &::before {
+        @extend %row-border;
+        top: 50%;
+      }
+      &.ok::before {
+        border-color: $ELE_W_COLOR;
+      }
+    }
+  }
+  .desc {
+    display: flex;
+    font-size: $TIP_FONT_SIZE;
+    div {
+      width: 105px;
+      text-align: center;
+      padding-top: 10px;
+    }
+    :first-child {
+      padding-right: 35px;
+    }
+    :last-child {
+      padding-left: 35px;
+    }
+  }
+}
+
+%search {
+  flex: 1;
+  display: flex;
+  background-color: transparent !important;
+  .bg {
+    background-color: white;
+    position: absolute;
+    width: -webkit-calc(100vw - 20px);
+    height: 30px;
+    top: 0;
+  }
+  .fix {
+    width: calc(100vw - 20px);
+  }
+  .bg::before {
+    @extend %btn-border;
+    border: 1px solid $BORDER_COLOR;
+  }
+  &::before {
+    display: none;
+  }
+  input {
+    text-align: left;
+    background-color: transparent;
+    font-size: $TIP_FONT_SIZE;
+  }
+  .icon-box {
+    width: 30px;
+    height: 30px;
+    position: relative;
+  }
+  .icon {
+    width: 30px;
+    height: 30px;
+    background: url('../../assets/search.svg') no-repeat center {
+      size: 20px;
+    }
+  ;
+    position: absolute;
+    top: 0;
+    z-index: 1;
+  }
+}
